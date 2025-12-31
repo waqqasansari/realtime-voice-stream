@@ -1,14 +1,12 @@
 from fastapi import FastAPI
+
+from app.core import config
 from app.routers import health
 
 app = FastAPI(
-    title="VoiceStream Backend",
-    description="voice stream backend",
-    version="1.0.0"
+    title=config.APP_NAME,
+    description=config.APP_DESCRIPTION,
+    version=config.APP_VERSION,
 )
 
 app.include_router(health.router)
-
-@app.get("/")
-def root():
-    return {"message": "voice stream backend running ✅"}
