@@ -67,8 +67,19 @@ async def voice_stream(websocket: WebSocket) -> None:
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         stream_id = uuid4().hex
         
-        # Save the raw audio data
-        audio_path = recordings_dir / f"voice-{timestamp}-{stream_id}.bin"
+        # Determine the file extension from metadata or default to .webm
+        # (Since the frontend sends audio/webm, this ensures it's playable)
+        mime_type = metadata.get("mimeType", "audio/webm")
+        extension = ".webm"
+        if "audio/wav" in mime_type:
+            extension = ".wav"
+        elif "audio/mpeg" in mime_type:
+            extension = ".mp3"
+        elif "audio/ogg" in mime_type:
+            extension = ".ogg"
+            
+        # Save the audio data with the correct extension
+        audio_path = recordings_dir / f"voice-{timestamp}-{stream_id}{extension}"
         audio_path.write_bytes(audio_buffer)
 
         # If metadata was received, save it as a separate JSON file

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Mic, Zap } from "lucide-react";
 
 export default function ActionButtons() {
   const [isHovered, setIsHovered] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -12,7 +14,7 @@ export default function ActionButtons() {
         className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black font-bold text-lg tracking-wide transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/20 overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={() => console.log("Start clicked")}
+        onClick={() => router.push('/stream')}
       >
         <div className="absolute inset-0 -translate-x-[100%] group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-black/10 to-transparent z-10" />
         <Mic className={`w-5 h-5 transition-transform duration-300 ${isHovered ? "scale-110" : ""}`} />

@@ -137,3 +137,5 @@ cython_debug/
 
 # Clerk
 .clerk/
+
+recordings
