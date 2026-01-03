@@ -17,7 +17,14 @@ export default function StreamPage() {
     const animationFrameRef = useRef<number | null>(null);
     const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    const { sendAudioData, sendMetadata, isConnected } = useVoiceStream();
+    const {
+        sendAudioData,
+        sendMetadata,
+        sendControl,
+        clearAudioProgress,
+        isConnected,
+        audioProgress,
+    } = useVoiceStream();
 
     // Cleanup on unmount
     useEffect(() => {
@@ -83,6 +90,13 @@ export default function StreamPage() {
             // Send audio chunks every 100ms for real-time streaming
             mediaRecorder.start(100);
 
+            clearAudioProgress();
+            sendControl("stream_start", {
+                startTime: new Date().toISOString(),
+                mimeType: 'audio/webm;codecs=opus',
+                sampleRate: 44100,
+            });
+
             // Send metadata
             sendMetadata({
                 startTime: new Date().toISOString(),
@@ -124,6 +138,8 @@ export default function StreamPage() {
 
         setIsRecording(false);
         setAudioLevel(0);
+        clearAudioProgress();
+        sendControl("stream_end");
     };
 
     const formatDuration = (seconds: number) => {
@@ -226,6 +242,18 @@ export default function StreamPage() {
                     <p className="text-sm text-zinc-500 dark:text-zinc-500 font-medium">
                         {isRecording ? 'Tap to stop recording' : 'Tap to start listening'}
                     </p>
+
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+                        {audioProgress ? (
+                            <div className="flex flex-col items-center gap-1">
+                                <span>Last chunk: {audioProgress.chunkBytes} bytes</span>
+                                <span>Total received: {audioProgress.totalBytes} bytes</span>
+                                <span>Chunks received: {audioProgress.totalChunks}</span>
+                            </div>
+                        ) : (
+                            <span>Awaiting audio stream...</span>
+                        )}
+                    </div>
                 </div>
             </main>
         </div>

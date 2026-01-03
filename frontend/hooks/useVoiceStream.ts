@@ -4,8 +4,16 @@ import { useEffect, useRef, useState } from "react";
 
 const WEBSOCKET_URL = "ws://localhost:8080/ws/voice";
 
+type AudioProgress = {
+    type: "audio_progress";
+    chunkBytes: number;
+    totalBytes: number;
+    totalChunks: number;
+};
+
 export default function useVoiceStream() {
     const [isConnected, setIsConnected] = useState(false);
+    const [audioProgress, setAudioProgress] = useState<AudioProgress | null>(null);
     const websocketRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const reconnectAttemptsRef = useRef(0);
@@ -41,6 +49,17 @@ export default function useVoiceStream() {
                 console.error("WebSocket error:", error);
             };
 
+            ws.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data) as AudioProgress;
+                    if (payload.type === "audio_progress") {
+                        setAudioProgress(payload);
+                    }
+                } catch (error) {
+                    console.warn("Unable to parse WebSocket message:", error);
+                }
+            };
+
             websocketRef.current = ws;
         } catch (error) {
             console.error("Failed to create WebSocket:", error);
@@ -71,15 +90,40 @@ export default function useVoiceStream() {
 
     const sendMetadata = (metadata: Record<string, any>) => {
         if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
-            websocketRef.current.send(JSON.stringify(metadata));
+            websocketRef.current.send(
+                JSON.stringify({
+                    type: "metadata",
+                    metadata,
+                })
+            );
         } else {
             console.warn("WebSocket is not connected. Cannot send metadata.");
         }
     };
 
+    const sendControl = (type: "stream_start" | "stream_end", metadata?: Record<string, any>) => {
+        if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+            websocketRef.current.send(
+                JSON.stringify({
+                    type,
+                    metadata,
+                })
+            );
+        } else {
+            console.warn("WebSocket is not connected. Cannot send control message.");
+        }
+    };
+
+    const clearAudioProgress = () => {
+        setAudioProgress(null);
+    };
+
     return {
         isConnected,
+        audioProgress,
         sendAudioData,
         sendMetadata,
+        sendControl,
+        clearAudioProgress,
     };
 }
