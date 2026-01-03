@@ -24,6 +24,7 @@ async def voice_stream(websocket: WebSocket) -> None:
     
     # Buffer to accumulate incoming raw audio bytes
     audio_buffer = bytearray()
+    chunk_count = 0
 
     # Dictionary to store any metadata received as JSON text
     metadata: dict[str, str] = {}
@@ -71,12 +72,14 @@ async def voice_stream(websocket: WebSocket) -> None:
             if message.get("bytes") is not None:
                 chunk = message["bytes"]
                 audio_buffer.extend(chunk)
+                chunk_count += 1
                 try:
                     await websocket.send_json(
                         {
                             "type": "audio_progress",
                             "chunkBytes": len(chunk),
                             "totalBytes": len(audio_buffer),
+                            "totalChunks": chunk_count,
                         }
                     )
                 except RuntimeError as exc:
@@ -94,6 +97,7 @@ async def voice_stream(websocket: WebSocket) -> None:
                 message_type = payload.get("type")
                 if message_type == "stream_start":
                     audio_buffer.clear()
+                    chunk_count = 0
                     metadata.clear()
                     metadata.update(payload.get("metadata", {}))
                     await websocket.send_json(
@@ -101,6 +105,7 @@ async def voice_stream(websocket: WebSocket) -> None:
                             "type": "audio_progress",
                             "chunkBytes": 0,
                             "totalBytes": 0,
+                            "totalChunks": 0,
                         }
                     )
                     logger.info("Voice stream started with metadata: %s", metadata)
@@ -111,12 +116,14 @@ async def voice_stream(websocket: WebSocket) -> None:
                     )
                     persist_recording(audio_buffer, metadata)
                     audio_buffer.clear()
+                    chunk_count = 0
                     metadata.clear()
                     await websocket.send_json(
                         {
                             "type": "audio_progress",
                             "chunkBytes": 0,
                             "totalBytes": 0,
+                            "totalChunks": 0,
                         }
                     )
                     continue

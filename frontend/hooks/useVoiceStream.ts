@@ -8,6 +8,7 @@ type AudioProgress = {
     type: "audio_progress";
     chunkBytes: number;
     totalBytes: number;
+    totalChunks: number;
 };
 
 export default function useVoiceStream() {

@@ -248,6 +248,7 @@ export default function StreamPage() {
                             <div className="flex flex-col items-center gap-1">
                                 <span>Last chunk: {audioProgress.chunkBytes} bytes</span>
                                 <span>Total received: {audioProgress.totalBytes} bytes</span>
+                                <span>Chunks received: {audioProgress.totalChunks}</span>
                             </div>
                         ) : (
                             <span>Awaiting audio stream...</span>
