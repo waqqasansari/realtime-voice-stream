@@ -35,7 +35,18 @@ async def voice_stream(websocket: WebSocket) -> None:
             
             # If the message contains binary data (bytes), append it to our buffer
             if message.get("bytes") is not None:
-                audio_buffer.extend(message["bytes"])
+                chunk = message["bytes"]
+                audio_buffer.extend(chunk)
+                try:
+                    await websocket.send_json(
+                        {
+                            "type": "audio_progress",
+                            "chunkBytes": len(chunk),
+                            "totalBytes": len(audio_buffer),
+                        }
+                    )
+                except RuntimeError as exc:
+                    logger.warning("Failed to send progress update: %s", exc)
                 continue
 
             # If the message contains text, handle it (e.g., metadata)

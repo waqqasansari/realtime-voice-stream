@@ -17,7 +17,7 @@ export default function StreamPage() {
     const animationFrameRef = useRef<number | null>(null);
     const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    const { sendAudioData, sendMetadata, isConnected } = useVoiceStream();
+    const { sendAudioData, sendMetadata, isConnected, audioProgress } = useVoiceStream();
 
     // Cleanup on unmount
     useEffect(() => {
@@ -226,6 +226,17 @@ export default function StreamPage() {
                     <p className="text-sm text-zinc-500 dark:text-zinc-500 font-medium">
                         {isRecording ? 'Tap to stop recording' : 'Tap to start listening'}
                     </p>
+
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+                        {audioProgress ? (
+                            <div className="flex flex-col items-center gap-1">
+                                <span>Last chunk: {audioProgress.chunkBytes} bytes</span>
+                                <span>Total received: {audioProgress.totalBytes} bytes</span>
+                            </div>
+                        ) : (
+                            <span>Awaiting audio stream...</span>
+                        )}
+                    </div>
                 </div>
             </main>
         </div>

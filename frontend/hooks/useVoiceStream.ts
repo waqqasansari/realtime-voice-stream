@@ -4,8 +4,15 @@ import { useEffect, useRef, useState } from "react";
 
 const WEBSOCKET_URL = "ws://localhost:8080/ws/voice";
 
+type AudioProgress = {
+    type: "audio_progress";
+    chunkBytes: number;
+    totalBytes: number;
+};
+
 export default function useVoiceStream() {
     const [isConnected, setIsConnected] = useState(false);
+    const [audioProgress, setAudioProgress] = useState<AudioProgress | null>(null);
     const websocketRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const reconnectAttemptsRef = useRef(0);
@@ -39,6 +46,17 @@ export default function useVoiceStream() {
 
             ws.onerror = (error) => {
                 console.error("WebSocket error:", error);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data) as AudioProgress;
+                    if (payload.type === "audio_progress") {
+                        setAudioProgress(payload);
+                    }
+                } catch (error) {
+                    console.warn("Unable to parse WebSocket message:", error);
+                }
             };
 
             websocketRef.current = ws;
@@ -79,6 +97,7 @@ export default function useVoiceStream() {
 
     return {
         isConnected,
+        audioProgress,
         sendAudioData,
         sendMetadata,
     };
