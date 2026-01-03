@@ -17,7 +17,14 @@ export default function StreamPage() {
     const animationFrameRef = useRef<number | null>(null);
     const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    const { sendAudioData, sendMetadata, isConnected, audioProgress } = useVoiceStream();
+    const {
+        sendAudioData,
+        sendMetadata,
+        sendControl,
+        clearAudioProgress,
+        isConnected,
+        audioProgress,
+    } = useVoiceStream();
 
     // Cleanup on unmount
     useEffect(() => {
@@ -83,6 +90,13 @@ export default function StreamPage() {
             // Send audio chunks every 100ms for real-time streaming
             mediaRecorder.start(100);
 
+            clearAudioProgress();
+            sendControl("stream_start", {
+                startTime: new Date().toISOString(),
+                mimeType: 'audio/webm;codecs=opus',
+                sampleRate: 44100,
+            });
+
             // Send metadata
             sendMetadata({
                 startTime: new Date().toISOString(),
@@ -124,6 +138,8 @@ export default function StreamPage() {
 
         setIsRecording(false);
         setAudioLevel(0);
+        clearAudioProgress();
+        sendControl("stream_end");
     };
 
     const formatDuration = (seconds: number) => {

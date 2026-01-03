@@ -24,9 +24,43 @@ async def voice_stream(websocket: WebSocket) -> None:
     
     # Buffer to accumulate incoming raw audio bytes
     audio_buffer = bytearray()
-    
+
     # Dictionary to store any metadata received as JSON text
     metadata: dict[str, str] = {}
+
+    def persist_recording(buffer: bytearray, meta: dict[str, str]) -> None:
+        if not buffer:
+            return
+
+        # Define the directory where recordings will be saved (backend/recordings)
+        recordings_dir = Path(__file__).resolve().parents[2] / "recordings"
+        recordings_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate a unique filename using timestamp and a random ID
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        stream_id = uuid4().hex
+
+        # Determine the file extension from metadata or default to .webm
+        # (Since the frontend sends audio/webm, this ensures it's playable)
+        mime_type = meta.get("mimeType", "audio/webm")
+        extension = ".webm"
+        if "audio/wav" in mime_type:
+            extension = ".wav"
+        elif "audio/mpeg" in mime_type:
+            extension = ".mp3"
+        elif "audio/ogg" in mime_type:
+            extension = ".ogg"
+
+        # Save the audio data with the correct extension
+        audio_path = recordings_dir / f"voice-{timestamp}-{stream_id}{extension}"
+        audio_path.write_bytes(buffer)
+
+        # If metadata was received, save it as a separate JSON file
+        if meta:
+            metadata_path = recordings_dir / f"voice-{timestamp}-{stream_id}.json"
+            metadata_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+        logger.info("Saved voice stream to %s", audio_path)
 
     try:
         while True:
@@ -56,7 +90,41 @@ async def voice_stream(websocket: WebSocket) -> None:
 
             try:
                 # Attempt to parse text payload as JSON metadata
-                metadata = json.loads(text_payload)
+                payload = json.loads(text_payload)
+                message_type = payload.get("type")
+                if message_type == "stream_start":
+                    audio_buffer.clear()
+                    metadata.clear()
+                    metadata.update(payload.get("metadata", {}))
+                    await websocket.send_json(
+                        {
+                            "type": "audio_progress",
+                            "chunkBytes": 0,
+                            "totalBytes": 0,
+                        }
+                    )
+                    logger.info("Voice stream started with metadata: %s", metadata)
+                    continue
+                if message_type == "stream_end":
+                    logger.info(
+                        "Voice stream ended; persisting %d bytes", len(audio_buffer)
+                    )
+                    persist_recording(audio_buffer, metadata)
+                    audio_buffer.clear()
+                    metadata.clear()
+                    await websocket.send_json(
+                        {
+                            "type": "audio_progress",
+                            "chunkBytes": 0,
+                            "totalBytes": 0,
+                        }
+                    )
+                    continue
+
+                if message_type == "metadata":
+                    metadata = payload.get("metadata", {})
+                else:
+                    metadata = payload
                 logger.info("Received voice stream metadata: %s", metadata)
             except json.JSONDecodeError:
                 # Log if the text is not JSON (it might be a simple message)
@@ -67,35 +135,4 @@ async def voice_stream(websocket: WebSocket) -> None:
         logger.info("Voice stream disconnected; persisting %d bytes", len(audio_buffer))
     finally:
         # If no audio was received, simply exit without saving anything
-        if not audio_buffer:
-            return
-
-        # Define the directory where recordings will be saved (backend/recordings)
-        recordings_dir = Path(__file__).resolve().parents[2] / "recordings"
-        recordings_dir.mkdir(parents=True, exist_ok=True)
-
-        # Generate a unique filename using timestamp and a random ID
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        stream_id = uuid4().hex
-        
-        # Determine the file extension from metadata or default to .webm
-        # (Since the frontend sends audio/webm, this ensures it's playable)
-        mime_type = metadata.get("mimeType", "audio/webm")
-        extension = ".webm"
-        if "audio/wav" in mime_type:
-            extension = ".wav"
-        elif "audio/mpeg" in mime_type:
-            extension = ".mp3"
-        elif "audio/ogg" in mime_type:
-            extension = ".ogg"
-            
-        # Save the audio data with the correct extension
-        audio_path = recordings_dir / f"voice-{timestamp}-{stream_id}{extension}"
-        audio_path.write_bytes(audio_buffer)
-
-        # If metadata was received, save it as a separate JSON file
-        if metadata:
-            metadata_path = recordings_dir / f"voice-{timestamp}-{stream_id}.json"
-            metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
-
-        logger.info("Saved voice stream to %s", audio_path)
+        persist_recording(audio_buffer, metadata)

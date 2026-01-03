@@ -89,10 +89,32 @@ export default function useVoiceStream() {
 
     const sendMetadata = (metadata: Record<string, any>) => {
         if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
-            websocketRef.current.send(JSON.stringify(metadata));
+            websocketRef.current.send(
+                JSON.stringify({
+                    type: "metadata",
+                    metadata,
+                })
+            );
         } else {
             console.warn("WebSocket is not connected. Cannot send metadata.");
         }
+    };
+
+    const sendControl = (type: "stream_start" | "stream_end", metadata?: Record<string, any>) => {
+        if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+            websocketRef.current.send(
+                JSON.stringify({
+                    type,
+                    metadata,
+                })
+            );
+        } else {
+            console.warn("WebSocket is not connected. Cannot send control message.");
+        }
+    };
+
+    const clearAudioProgress = () => {
+        setAudioProgress(null);
     };
 
     return {
@@ -100,5 +122,7 @@ export default function useVoiceStream() {
         audioProgress,
         sendAudioData,
         sendMetadata,
+        sendControl,
+        clearAudioProgress,
     };
 }
