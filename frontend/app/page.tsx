@@ -1,12 +1,12 @@
 "use client";
 
-import ActionButtons from "../components/ActionButtons";
-import BackgroundBlobs from "../components/BackgroundBlobs";
-import FeatureGrid from "../components/FeatureGrid";
-import HeroTitle from "../components/HeroTitle";
-import SiteFooter from "../components/SiteFooter";
-import StatusBadge from "../components/StatusBadge";
-import ThemeToggle from "../components/ThemeToggle";
+import ActionButtons from "@/components/home/ActionButtons";
+import BackgroundBlobs from "@/components/home/BackgroundBlobs";
+import FeatureGrid from "@/components/home/FeatureGrid";
+import HeroTitle from "@/components/home/HeroTitle";
+import SiteFooter from "@/components/home/SiteFooter";
+import StatusBadge from "@/components/home/StatusBadge";
+import ThemeToggle from "@/components/home/ThemeToggle";
 
 export default function Home() {
   return (
