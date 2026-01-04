@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Mic, ArrowLeft } from "lucide-react";
-import VoiceVisualizer from "@/components/VoiceVisualizer";
+import VoiceVisualizer from "@/components/stream/VoiceVisualizer";
 import useVoiceStream from "@/hooks/useVoiceStream";
 
 export default function StreamPage() {

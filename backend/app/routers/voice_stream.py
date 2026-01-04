@@ -1,102 +1,64 @@
 import json
 import logging
-import random
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-# Set up logging for this module
+from app.services.voice_stream import generate_dummy_caption
+
 logger = logging.getLogger(__name__)
 
-# Initialize the API router with a prefix and tags for documentation
 router = APIRouter(prefix="/ws", tags=["voice-stream"])
 
 
+def persist_recording(buffer: bytearray, meta: dict[str, str]) -> None:
+    if not buffer:
+        return
+
+    recordings_dir = Path(__file__).resolve().parents[2] / "recordings"
+    recordings_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stream_id = uuid4().hex
+
+    mime_type = meta.get("mimeType", "audio/webm")
+    extension = ".webm"
+    if "audio/wav" in mime_type:
+        extension = ".wav"
+    elif "audio/mpeg" in mime_type:
+        extension = ".mp3"
+    elif "audio/ogg" in mime_type:
+        extension = ".ogg"
+
+    audio_path = recordings_dir / f"voice-{timestamp}-{stream_id}{extension}"
+    audio_path.write_bytes(buffer)
+
+    if meta:
+        metadata_path = recordings_dir / f"voice-{timestamp}-{stream_id}.json"
+        metadata_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+    logger.info("Saved voice stream to %s", audio_path)
+
+
 @router.websocket("/voice")
-async def voice_stream(websocket: WebSocket) -> None:
+async def handle_voice_stream(websocket: WebSocket) -> None:
     """
     WebSocket endpoint that receives streamed audio bytes and metadata.
     On disconnect, it persists the accumulated audio data to a file.
     """
-    # Accept the incoming WebSocket connection
     await websocket.accept()
-    
-    # Buffer to accumulate incoming raw audio bytes
+
     audio_buffer = bytearray()
     chunk_count = 0
 
-    # Dictionary to store any metadata received as JSON text
     metadata: dict[str, str] = {}
-
-    def generate_dummy_caption(chunk_index: int) -> str:
-        starters = [
-            "Hearing",
-            "Detecting",
-            "Catching",
-            "Noting",
-            "Parsing",
-            "Capturing",
-        ]
-        subjects = [
-            "a quick phrase",
-            "background speech",
-            "short response",
-            "a brief thought",
-            "a clear sentence",
-            "steady narration",
-        ]
-        extras = [
-            "coming through",
-            "from the stream",
-            "in real time",
-            "with stable signal",
-            "for this chunk",
-            "just now",
-        ]
-        return f"{random.choice(starters)} {random.choice(subjects)} {random.choice(extras)} (chunk {chunk_index})."
-
-    def persist_recording(buffer: bytearray, meta: dict[str, str]) -> None:
-        if not buffer:
-            return
-
-        # Define the directory where recordings will be saved (backend/recordings)
-        recordings_dir = Path(__file__).resolve().parents[2] / "recordings"
-        recordings_dir.mkdir(parents=True, exist_ok=True)
-
-        # Generate a unique filename using timestamp and a random ID
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        stream_id = uuid4().hex
-
-        # Determine the file extension from metadata or default to .webm
-        # (Since the frontend sends audio/webm, this ensures it's playable)
-        mime_type = meta.get("mimeType", "audio/webm")
-        extension = ".webm"
-        if "audio/wav" in mime_type:
-            extension = ".wav"
-        elif "audio/mpeg" in mime_type:
-            extension = ".mp3"
-        elif "audio/ogg" in mime_type:
-            extension = ".ogg"
-
-        # Save the audio data with the correct extension
-        audio_path = recordings_dir / f"voice-{timestamp}-{stream_id}{extension}"
-        audio_path.write_bytes(buffer)
-
-        # If metadata was received, save it as a separate JSON file
-        if meta:
-            metadata_path = recordings_dir / f"voice-{timestamp}-{stream_id}.json"
-            metadata_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
-
-        logger.info("Saved voice stream to %s", audio_path)
 
     try:
         while True:
-            # Wait for any message from the client
             message = await websocket.receive()
-            
-            # If the message contains binary data (bytes), append it to our buffer
+
             if message.get("bytes") is not None:
                 chunk = message["bytes"]
                 audio_buffer.extend(chunk)
@@ -122,13 +84,11 @@ async def voice_stream(websocket: WebSocket) -> None:
                     logger.warning("Failed to send progress update: %s", exc)
                 continue
 
-            # If the message contains text, handle it (e.g., metadata)
             text_payload = message.get("text")
             if text_payload is None:
                 continue
 
             try:
-                # Attempt to parse text payload as JSON metadata
                 payload = json.loads(text_payload)
                 message_type = payload.get("type")
                 if message_type == "stream_start":
@@ -170,12 +130,11 @@ async def voice_stream(websocket: WebSocket) -> None:
                     metadata = payload
                 logger.info("Received voice stream metadata: %s", metadata)
             except json.JSONDecodeError:
-                # Log if the text is not JSON (it might be a simple message)
-                logger.info("Received non-JSON message on voice stream: %s", text_payload)
-                
+                logger.info(
+                    "Received non-JSON message on voice stream: %s", text_payload
+                )
+
     except WebSocketDisconnect:
-        # Handle the case where the client closes the connection
         logger.info("Voice stream disconnected; persisting %d bytes", len(audio_buffer))
     finally:
-        # If no audio was received, simply exit without saving anything
         persist_recording(audio_buffer, metadata)
