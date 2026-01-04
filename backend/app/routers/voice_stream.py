@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -28,6 +29,33 @@ async def voice_stream(websocket: WebSocket) -> None:
 
     # Dictionary to store any metadata received as JSON text
     metadata: dict[str, str] = {}
+
+    def generate_dummy_caption(chunk_index: int) -> str:
+        starters = [
+            "Hearing",
+            "Detecting",
+            "Catching",
+            "Noting",
+            "Parsing",
+            "Capturing",
+        ]
+        subjects = [
+            "a quick phrase",
+            "background speech",
+            "short response",
+            "a brief thought",
+            "a clear sentence",
+            "steady narration",
+        ]
+        extras = [
+            "coming through",
+            "from the stream",
+            "in real time",
+            "with stable signal",
+            "for this chunk",
+            "just now",
+        ]
+        return f"{random.choice(starters)} {random.choice(subjects)} {random.choice(extras)} (chunk {chunk_index})."
 
     def persist_recording(buffer: bytearray, meta: dict[str, str]) -> None:
         if not buffer:
@@ -73,6 +101,7 @@ async def voice_stream(websocket: WebSocket) -> None:
                 chunk = message["bytes"]
                 audio_buffer.extend(chunk)
                 chunk_count += 1
+                dummy_caption = generate_dummy_caption(chunk_count)
                 try:
                     await websocket.send_json(
                         {
@@ -80,6 +109,13 @@ async def voice_stream(websocket: WebSocket) -> None:
                             "chunkBytes": len(chunk),
                             "totalBytes": len(audio_buffer),
                             "totalChunks": chunk_count,
+                        }
+                    )
+                    await websocket.send_json(
+                        {
+                            "type": "chunk_caption",
+                            "chunkIndex": chunk_count,
+                            "text": dummy_caption,
                         }
                     )
                 except RuntimeError as exc:

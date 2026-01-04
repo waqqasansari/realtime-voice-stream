@@ -24,6 +24,7 @@ export default function StreamPage() {
         clearAudioProgress,
         isConnected,
         audioProgress,
+        captions,
     } = useVoiceStream();
 
     // Cleanup on unmount
@@ -252,6 +253,28 @@ export default function StreamPage() {
                             </div>
                         ) : (
                             <span>Awaiting audio stream...</span>
+                        )}
+                    </div>
+
+                    <div className="w-full max-w-xl bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/70 dark:border-zinc-800/70 rounded-2xl px-6 py-5 backdrop-blur">
+                        <div className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400 mb-3">
+                            Live Captions
+                        </div>
+                        {captions.length > 0 ? (
+                            <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-200">
+                                {captions.slice(-6).map((caption) => (
+                                    <li key={`${caption.chunkIndex}-${caption.text}`}>
+                                        <span className="font-semibold text-zinc-500 dark:text-zinc-400">
+                                            #{caption.chunkIndex}
+                                        </span>{" "}
+                                        {caption.text}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                                Waiting for captions from the stream...
+                            </p>
                         )}
                     </div>
                 </div>
