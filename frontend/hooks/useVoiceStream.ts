@@ -11,9 +11,16 @@ type AudioProgress = {
     totalChunks: number;
 };
 
+type ChunkCaption = {
+    type: "chunk_caption";
+    chunkIndex: number;
+    text: string;
+};
+
 export default function useVoiceStream() {
     const [isConnected, setIsConnected] = useState(false);
     const [audioProgress, setAudioProgress] = useState<AudioProgress | null>(null);
+    const [captions, setCaptions] = useState<ChunkCaption[]>([]);
     const websocketRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const reconnectAttemptsRef = useRef(0);
@@ -51,9 +58,11 @@ export default function useVoiceStream() {
 
             ws.onmessage = (event) => {
                 try {
-                    const payload = JSON.parse(event.data) as AudioProgress;
+                    const payload = JSON.parse(event.data) as AudioProgress | ChunkCaption;
                     if (payload.type === "audio_progress") {
                         setAudioProgress(payload);
+                    } else if (payload.type === "chunk_caption") {
+                        setCaptions((prev) => [...prev, payload]);
                     }
                 } catch (error) {
                     console.warn("Unable to parse WebSocket message:", error);
@@ -116,11 +125,13 @@ export default function useVoiceStream() {
 
     const clearAudioProgress = () => {
         setAudioProgress(null);
+        setCaptions([]);
     };
 
     return {
         isConnected,
         audioProgress,
+        captions,
         sendAudioData,
         sendMetadata,
         sendControl,
