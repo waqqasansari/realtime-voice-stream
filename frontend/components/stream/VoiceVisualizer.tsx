@@ -10,7 +10,7 @@ interface VoiceVisualizerProps {
 export default function VoiceVisualizer({ audioLevel, isRecording }: VoiceVisualizerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationRef = useRef<number | null>(null);
-    const barsRef = useRef<number[]>(Array(40).fill(0)); // Reduced bar count for wider, cleaner bars
+    const barsRef = useRef<number[]>(Array(60).fill(0));
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -27,9 +27,9 @@ export default function VoiceVisualizer({ audioLevel, isRecording }: VoiceVisual
 
         ctx.scale(dpr, dpr);
 
-        const barCount = 40;
-        const barWidth = (rect.width / barCount) * 0.6; // Create spacing between bars
-        const spacing = (rect.width / barCount) * 0.4;
+        const barCount = 60;
+        const barWidth = (rect.width / barCount) * 0.5;
+        const spacing = (rect.width / barCount) * 0.5;
         const centerY = rect.height / 2;
 
         const animate = () => {
@@ -38,11 +38,11 @@ export default function VoiceVisualizer({ audioLevel, isRecording }: VoiceVisual
             // Update bars with smooth interpolation
             for (let i = 0; i < barCount; i++) {
                 const targetHeight = isRecording
-                    ? Math.random() * audioLevel * 120 + audioLevel * 30 + 5
-                    : Math.sin((Date.now() / 1000 + i * 0.2)) * 15 + 5;
+                    ? Math.random() * audioLevel * 150 + audioLevel * 50 + 4
+                    : Math.sin((Date.now() / 800 + i * 0.1)) * 10 + 4; // Idle animation
 
-                // Smooth interpolation
-                barsRef.current[i] += (targetHeight - barsRef.current[i]) * 0.15;
+                // Elastic interpolation for premium feel
+                barsRef.current[i] += (targetHeight - barsRef.current[i]) * 0.2;
 
                 const barHeight = Math.max(4, barsRef.current[i]);
                 const x = i * (barWidth + spacing) + spacing / 2;
@@ -51,25 +51,28 @@ export default function VoiceVisualizer({ audioLevel, isRecording }: VoiceVisual
                 const gradient = ctx.createLinearGradient(0, centerY - barHeight / 2, 0, centerY + barHeight / 2);
 
                 if (isRecording) {
-                    gradient.addColorStop(0, '#a855f7'); // purple-500
-                    gradient.addColorStop(0.5, '#ec4899'); // pink-500
-                    gradient.addColorStop(1, '#3b82f6'); // blue-500
+                    // Vibrant recording colors (Violet to Rose)
+                    gradient.addColorStop(0, '#8b5cf6'); // Violet
+                    gradient.addColorStop(0.5, '#f43f5e'); // Rose
+                    gradient.addColorStop(1, '#8b5cf6'); // Violet
                 } else {
-                    gradient.addColorStop(0, '#a1a1aa'); // zinc-400
-                    gradient.addColorStop(1, '#71717a'); // zinc-500
+                    // Subtle idle colors (Slate/zinc)
+                    gradient.addColorStop(0, 'rgba(148, 163, 184, 0.5)');
+                    gradient.addColorStop(0.5, 'rgba(148, 163, 184, 0.8)');
+                    gradient.addColorStop(1, 'rgba(148, 163, 184, 0.5)');
                 }
 
                 ctx.fillStyle = gradient;
 
                 // Draw rounded bars
                 ctx.beginPath();
-                ctx.roundRect(x, centerY - barHeight / 2, barWidth, barHeight, 4);
+                ctx.roundRect(x, centerY - barHeight / 2, barWidth, barHeight, 10);
                 ctx.fill();
 
                 // Add glow effect when recording
-                if (isRecording && audioLevel > 0.1) {
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = 'rgba(168, 85, 247, 0.4)';
+                if (isRecording && audioLevel > 0.05) {
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = 'rgba(244, 63, 94, 0.5)';
                     ctx.fill();
                     ctx.shadowBlur = 0;
                 }
@@ -88,40 +91,12 @@ export default function VoiceVisualizer({ audioLevel, isRecording }: VoiceVisual
     }, [audioLevel, isRecording]);
 
     return (
-        <div className="relative w-full max-w-2xl mx-auto">
-            {/* Main Glass Container */}
-            <div className={`
-                relative p-1 rounded-3xl transition-all duration-500
-                ${isRecording
-                    ? 'bg-gradient-to-br from-purple-500/30 via-pink-500/30 to-blue-500/30 shadow-2xl shadow-purple-500/20'
-                    : 'bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10'
-                }
-            `}>
-                <div className="relative bg-white/80 dark:bg-black/40 backdrop-blur-2xl rounded-[22px] overflow-hidden p-8 border border-white/50 dark:border-white/10">
-
-                    {/* Visualizer Canvas */}
-                    <div className="relative h-48 w-full flex items-center justify-center">
-                        <canvas
-                            ref={canvasRef}
-                            className="w-full h-full"
-                            style={{ width: "100%", height: "100%" }}
-                        />
-                    </div>
-
-                    {/* Status Text & Level */}
-                    <div className="mt-6 flex items-center justify-between px-2">
-                        <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-zinc-400'}`} />
-                            <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                                {isRecording ? 'Listening...' : 'Ready'}
-                            </span>
-                        </div>
-                        <div className="text-sm font-medium font-mono text-zinc-500 dark:text-zinc-500">
-                            {Math.round(audioLevel * 100)}%
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div className="relative h-64 w-full flex items-center justify-center">
+            <canvas
+                ref={canvasRef}
+                className="w-full h-full"
+                style={{ width: "100%", height: "100%" }}
+            />
         </div>
     );
 }

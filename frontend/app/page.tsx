@@ -10,43 +10,24 @@ import ThemeToggle from "@/components/home/ThemeToggle";
 
 export default function Home() {
   return (
-    <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center font-sans selection:bg-purple-500/30">
+    <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center font-sans selection:bg-primary/30">
       <BackgroundBlobs />
       <ThemeToggle />
 
-      <main className="relative z-10 flex flex-col items-center justify-center px-4 text-center max-w-4xl mx-auto w-full">
+      <main className="relative z-10 flex flex-col items-center justify-center px-4 text-center max-w-6xl mx-auto w-full pt-20 pb-32">
         <StatusBadge />
         <HeroTitle />
-        <p className="text-lg md:text-2xl text-zinc-700 dark:text-zinc-300 max-w-2xl mb-12 leading-relaxed font-normal">
+
+        <p className="text-xl md:text-2xl text-muted-foreground/80 max-w-2xl mb-12 leading-relaxed font-light tracking-wide animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           Real-time, ultra-low latency audio communication infrastructure.
-          <span className="hidden md:inline"> Built for instant connection.</span>
+          <span className="hidden md:inline block mt-2 font-medium text-foreground"> Built for instant connection.</span>
         </p>
+
         <ActionButtons />
         <FeatureGrid />
       </main>
 
       <SiteFooter />
-
-      <style jsx global>{`
-        @keyframes shimmer {
-          100% {
-            transform: translateX(100%);
-          }
-        }
-        @keyframes fade-in-down {
-          0% {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in-down {
-          animation: fade-in-down 0.8s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 }

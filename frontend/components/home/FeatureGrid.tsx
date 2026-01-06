@@ -1,24 +1,38 @@
 import { Activity, Mic, Zap } from "lucide-react";
 
 const features = [
-  { label: "Latency", value: "< 50ms", icon: Activity },
-  { label: "Protocol", value: "WebSocket", icon: Zap },
-  { label: "Codec", value: "Opus 48kHz", icon: Mic },
+  { label: "Latency", value: "< 50ms", icon: Activity, description: "Edge-computed real-time processing" },
+  { label: "Protocol", value: "WebSocket", icon: Zap, description: "Persistent bi-directional connection" },
+  { label: "Codec", value: "Opus 48kHz", icon: Mic, description: "Studio-grade voice clarity" },
 ];
 
 export default function FeatureGrid() {
   return (
-    <div className="mt-20 grid grid-cols-2 md:grid-cols-3 gap-8 w-full max-w-3xl">
-      {features.map((feature) => (
+    <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl z-10 px-4">
+      {features.map((feature, index) => (
         <div
           key={feature.label}
-          className="flex flex-col items-center justify-center p-6 rounded-2xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none hover:shadow-md dark:hover:bg-white/10 transition-all duration-300"
+          className="group relative flex flex-col items-center justify-center p-8 rounded-3xl bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 overflow-hidden hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]"
+          style={{ animationDelay: `${index * 100}ms` }}
         >
-          <feature.icon className="w-6 h-6 mb-3 text-purple-600 dark:text-purple-400" />
-          <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{feature.value}</div>
-          <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+          {/* Hover Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+          <div className="relative z-10 p-4 rounded-2xl bg-white/10 dark:bg-white/5 mb-4 group-hover:scale-110 transition-transform duration-500 ring-1 ring-white/20">
+            <feature.icon className="w-8 h-8 text-primary group-hover:text-accent transition-colors duration-300" />
+          </div>
+
+          <div className="relative z-10 text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/60 mb-2">
+            {feature.value}
+          </div>
+
+          <div className="relative z-10 text-sm font-semibold text-primary/80 uppercase tracking-widest mb-2">
             {feature.label}
           </div>
+
+          <p className="relative z-10 text-sm text-center text-muted-foreground/80 font-medium">
+            {feature.description}
+          </p>
         </div>
       ))}
     </div>

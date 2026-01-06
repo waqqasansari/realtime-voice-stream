@@ -20,13 +20,13 @@ export default function ThemeToggle() {
     <nav className="absolute top-6 right-6 z-50 flex items-center gap-4">
       <button
         onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-        className="p-3 rounded-full bg-white/50 dark:bg-zinc-800/50 backdrop-blur-md border border-zinc-200 dark:border-zinc-700/50 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 group"
+        className="p-3 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-xl border border-white/20 shadow-lg hover:shadow-primary/20 hover:scale-110 transition-all duration-300 group"
         aria-label="Toggle Theme"
       >
         {resolvedTheme === "dark" ? (
-          <Sun className="w-5 h-5 text-amber-300 group-hover:rotate-90 transition-transform duration-500" />
+          <Sun className="w-5 h-5 text-amber-300 group-hover:rotate-180 transition-transform duration-700 ease-in-out" />
         ) : (
-          <Moon className="w-5 h-5 text-indigo-600 group-hover:-rotate-12 transition-transform duration-500" />
+          <Moon className="w-5 h-5 text-indigo-500 group-hover:-rotate-12 transition-transform duration-500 ease-in-out" />
         )}
       </button>
     </nav>

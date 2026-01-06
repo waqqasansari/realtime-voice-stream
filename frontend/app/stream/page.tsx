@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mic, ArrowLeft } from "lucide-react";
+import { Mic, ArrowLeft, Wifi, WifiOff, Activity } from "lucide-react";
 import VoiceVisualizer from "@/components/stream/VoiceVisualizer";
 import useVoiceStream from "@/hooks/useVoiceStream";
+import BackgroundBlobs from "@/components/home/BackgroundBlobs";
 
 export default function StreamPage() {
     const router = useRouter();
@@ -150,132 +151,146 @@ export default function StreamPage() {
     };
 
     return (
-        <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center font-sans bg-zinc-50 dark:bg-black selection:bg-purple-500/30">
-            {/* Ambient Background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-500/20 dark:bg-purple-800/20 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-screen animate-pulse" />
-                <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-500/20 dark:bg-blue-800/20 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-purple-500/10 via-transparent to-blue-500/10 dark:from-purple-800/10 dark:to-blue-800/10 rounded-full blur-[80px]" />
+        <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center font-sans">
+            <BackgroundBlobs />
 
-                {/* Grid Pattern Overlay */}
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 dark:opacity-40 brightness-100 dark:brightness-100 mix-blend-overlay"></div>
-            </div>
-
-            {/* Navigation Bar */}
+            {/* Top Navigation Bar */}
             <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-30">
                 <button
                     onClick={() => router.push('/')}
-                    className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 text-zinc-600 dark:text-zinc-400 hover:bg-white/80 dark:hover:bg-zinc-800/80 transition-all duration-300 hover:scale-105"
+                    className="group flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 >
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                    <span className="font-medium text-sm">Back</span>
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    <span className="font-medium text-sm">Back to Home</span>
                 </button>
 
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border transition-colors duration-500 ${isConnected
-                    ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400'
-                    : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
+                <div className={`flex items-center gap-3 px-5 py-2.5 rounded-full backdrop-blur-md border transition-all duration-500 shadow-lg ${isConnected
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
+                    : 'bg-red-500/10 border-red-500/20 text-red-500'
                     }`}>
-                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                    <span className="text-sm font-medium">
+                    <div className="relative">
+                        <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                        {isConnected && <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75" />}
+                    </div>
+                    <span className="text-sm font-semibold tracking-wide uppercase">
                         {isConnected ? 'System Online' : 'Offline'}
                     </span>
+                    {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
                 </div>
             </div>
 
-            <main className="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl px-4 mx-auto">
+            <main className="relative z-10 flex flex-col items-center justify-center w-full max-w-5xl px-4 mx-auto py-20">
                 {/* Header Section */}
-                <div className="mb-12 text-center space-y-4">
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-zinc-900 to-zinc-500 dark:from-white dark:to-zinc-500">
-                        Voice Streaming
+                <div className="mb-12 text-center space-y-4 animate-fade-in-down">
+                    <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 mb-4 backdrop-blur-sm">
+                        <Activity className="w-8 h-8 text-primary" />
+                    </div>
+                    <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 drop-shadow-sm">
+                        Live Voice Stream
                     </h1>
-                    <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 max-w-lg mx-auto font-light">
-                        Real-time high fidelity audio transmission
+                    <p className="text-lg text-muted-foreground max-w-lg mx-auto font-light tracking-wide">
+                        High-fidelity, low-latency audio transmission channel
                     </p>
                 </div>
 
                 {/* Main Visualizer Area */}
-                <div className="w-full mb-16 relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-[2.5rem] blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200"></div>
-                    <VoiceVisualizer audioLevel={audioLevel} isRecording={isRecording} />
+                <div className="w-full mb-12 relative group max-w-3xl mx-auto">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                    <div className="relative glass-panel rounded-[2.5rem] p-8 overflow-hidden">
+                        <VoiceVisualizer audioLevel={audioLevel} isRecording={isRecording} />
+                    </div>
                 </div>
 
                 {/* Controls Section */}
-                <div className="flex flex-col items-center gap-8">
-                    {/* Timer */}
-                    <div className={`font-mono text-2xl font-bold transition-all duration-500 ${isRecording ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
-                        } text-zinc-800 dark:text-zinc-200`}>
-                        {formatDuration(duration)}
-                    </div>
+                <div className="flex flex-col items-center gap-10 w-full max-w-2xl">
 
-                    {/* Main Interaction Button */}
-                    <button
-                        onClick={isRecording ? stopRecording : startRecording}
-                        disabled={!isConnected}
-                        className={`
-                            relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 cursor-pointer
-                            ${!isConnected ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-105 active:scale-95'}
-                        `}
-                    >
-                        {/* Button Glow/Background */}
-                        <div className={`absolute inset-0 rounded-full transition-all duration-500 ${isRecording
-                            ? 'bg-gradient-to-tr from-red-500 to-pink-600 shadow-[0_0_50px_-5px_rgba(239,68,68,0.5)]'
-                            : 'bg-gradient-to-tr from-zinc-900 to-zinc-700 dark:from-zinc-800 dark:to-zinc-900 shadow-[0_0_30px_-5px_rgba(0,0,0,0.3)] border border-white/10'
-                            }`} />
+                    {/* Recording Control */}
+                    <div className="flex flex-col items-center gap-6">
+                        <div className={`font-mono text-4xl font-bold transition-all duration-500 ${isRecording ? 'opacity-100 text-foreground' : 'opacity-30 text-muted-foreground'}`}>
+                            {formatDuration(duration)}
+                        </div>
 
-                        {/* Ripple Effect when recording */}
-                        {isRecording && (
-                            <>
-                                <div className="absolute inset-0 rounded-full border border-red-500/50 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
-                                <div className="absolute inset-0 rounded-full border border-red-500/30 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite_0.5s]" />
-                            </>
-                        )}
+                        <button
+                            onClick={isRecording ? stopRecording : startRecording}
+                            disabled={!isConnected}
+                            className={`
+                                relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500 
+                                ${!isConnected ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110 active:scale-95 cursor-pointer'}
+                            `}
+                        >
+                            {/* Button Background/Glow */}
+                            <div className={`absolute inset-0 rounded-full transition-all duration-500 ${isRecording
+                                ? 'bg-gradient-to-tr from-rose-500 to-red-600 shadow-[0_0_60px_-10px_rgba(225,29,72,0.6)]'
+                                : 'bg-gradient-to-tr from-foreground to-foreground/80 shadow-2xl border border-white/10'
+                                }`} />
 
-                        {/* Icon */}
-                        <div className="relative z-10 text-white">
-                            {isRecording ? (
-                                <div className="w-8 h-8 rounded bg-white shadow-lg animate-[pulse_2s_infinite]" />
-                            ) : (
-                                <Mic className="w-10 h-10 drop-shadow-md" />
+                            {/* Ripple Effect when recording */}
+                            {isRecording && (
+                                <>
+                                    <div className="absolute inset-0 rounded-full border-2 border-rose-500/50 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                                    <div className="absolute inset-0 rounded-full border border-rose-500/30 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite_0.5s]" />
+                                </>
                             )}
-                        </div>
-                    </button>
 
-                    <p className="text-sm text-zinc-500 dark:text-zinc-500 font-medium">
-                        {isRecording ? 'Tap to stop recording' : 'Tap to start listening'}
-                    </p>
-
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
-                        {audioProgress ? (
-                            <div className="flex flex-col items-center gap-1">
-                                <span>Last chunk: {audioProgress.chunkBytes} bytes</span>
-                                <span>Total received: {audioProgress.totalBytes} bytes</span>
-                                <span>Chunks received: {audioProgress.totalChunks}</span>
+                            {/* Icon */}
+                            <div className={`relative z-10 transition-colors duration-300 ${isRecording ? 'text-white' : 'text-background'}`}>
+                                {isRecording ? (
+                                    <div className="w-10 h-10 rounded-lg bg-white shadow-lg animate-[pulse_2s_infinite]" />
+                                ) : (
+                                    <Mic className="w-12 h-12" />
+                                )}
                             </div>
-                        ) : (
-                            <span>Awaiting audio stream...</span>
-                        )}
+                        </button>
+
+                        <p className="text-sm text-muted-foreground/80 font-medium uppercase tracking-widest">
+                            {isRecording ? 'Broadcasting...' : 'Tap to Stream'}
+                        </p>
                     </div>
 
-                    <div className="w-full max-w-xl bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/70 dark:border-zinc-800/70 rounded-2xl px-6 py-5 backdrop-blur">
-                        <div className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400 mb-3">
-                            Live Captions
+                    {/* Stats & Captions */}
+                    <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Stats Panel */}
+                        <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center items-center text-center">
+                            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Stream Stats</div>
+                            <div className="font-mono text-xs text-foreground/80 space-y-1">
+                                {audioProgress ? (
+                                    <>
+                                        <div className="flex justify-between w-full gap-4"><span>Chunk Size:</span> <span className="text-primary">{audioProgress.chunkBytes} B</span></div>
+                                        <div className="flex justify-between w-full gap-4"><span>Total Data:</span> <span className="text-primary">{(audioProgress.totalBytes / 1024).toFixed(1)} KB</span></div>
+                                        <div className="flex justify-between w-full gap-4"><span>Packets:</span> <span className="text-primary">{audioProgress.totalChunks}</span></div>
+                                    </>
+                                ) : (
+                                    <p className="opacity-50">No data transmitted yet</p>
+                                )}
+                            </div>
                         </div>
-                        {captions.length > 0 ? (
-                            <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-200">
-                                {captions.slice(-6).map((caption) => (
-                                    <li key={`${caption.chunkIndex}-${caption.text}`}>
-                                        <span className="font-semibold text-zinc-500 dark:text-zinc-400">
-                                            #{caption.chunkIndex}
-                                        </span>{" "}
-                                        {caption.text}
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                Waiting for captions from the stream...
-                            </p>
-                        )}
+
+                        {/* Captions Panel */}
+                        <div className="glass-panel p-6 rounded-2xl min-h-[120px]">
+                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                Live Captions
+                            </div>
+
+                            <div className="h-24 overflow-y-auto custom-scrollbar">
+                                {captions.length > 0 ? (
+                                    <ul className="space-y-2 text-sm">
+                                        {captions.slice(-6).map((caption) => (
+                                            <li key={`${caption.chunkIndex}-${caption.text}`} className="text-foreground/90 leading-relaxed animate-fade-in-up">
+                                                <span className="text-[10px] font-mono text-primary/70 mr-2">
+                                                    #{caption.chunkIndex}
+                                                </span>
+                                                {caption.text}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground/50 italic">
+                                        Waiting for speech...
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>

@@ -1,10 +1,16 @@
 export default function HeroTitle() {
   return (
-    <div className="relative mb-6 group cursor-default">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-purple-500/10 dark:bg-purple-500/20 blur-[90px] rounded-full pointer-events-none dark:mix-blend-screen mix-blend-multiply" />
-      <h1 className="relative z-10 text-6xl sm:text-7xl md:text-9xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-zinc-900 via-zinc-800 to-zinc-600 dark:from-white dark:via-zinc-200 dark:to-zinc-400 animate-gradient-y drop-shadow-sm">
+    <div className="relative mb-8 group cursor-default animate-float">
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
+
+      {/* Main Title */}
+      <h1 className="relative z-10 text-6xl sm:text-7xl md:text-9xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground via-foreground/80 to-foreground/40 dark:from-white dark:via-white/90 dark:to-white/50 drop-shadow-sm filter backdrop-blur-[1px]">
         VoiceStream
       </h1>
+
+      {/* Subtitle/Accent line */}
+      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
     </div>
   );
 }
