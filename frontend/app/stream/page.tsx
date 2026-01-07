@@ -179,117 +179,145 @@ export default function StreamPage() {
                 </div>
             </div>
 
-            <main className="relative z-10 flex flex-col items-center justify-center w-full max-w-5xl px-4 mx-auto py-20">
-                {/* Header Section */}
-                <div className="mb-12 text-center space-y-4 animate-fade-in-down">
-                    <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 mb-4 backdrop-blur-sm">
-                        <Activity className="w-8 h-8 text-primary" />
-                    </div>
-                    <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 drop-shadow-sm">
-                        Live Voice Stream
-                    </h1>
-                    <p className="text-lg text-muted-foreground max-w-lg mx-auto font-light tracking-wide">
-                        High-fidelity, low-latency audio transmission channel
-                    </p>
-                </div>
-
-                {/* Main Visualizer Area */}
-                <div className="w-full mb-12 relative group max-w-3xl mx-auto">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative glass-panel rounded-[2.5rem] p-8 overflow-hidden">
-                        <VoiceVisualizer audioLevel={audioLevel} isRecording={isRecording} />
-                    </div>
-                </div>
-
-                {/* Controls Section */}
-                <div className="flex flex-col items-center gap-10 w-full max-w-2xl">
-
-                    {/* Recording Control */}
-                    <div className="flex flex-col items-center gap-6">
-                        <div className={`font-mono text-4xl font-bold transition-all duration-500 ${isRecording ? 'opacity-100 text-foreground' : 'opacity-30 text-muted-foreground'}`}>
-                            {formatDuration(duration)}
+            <main className="relative z-10 w-full max-w-[95rem] px-4 md:px-8 mx-auto py-8 lg:py-12 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center min-h-[calc(100vh-100px)]">
+                {/* Left Column: Visuals & Controls */}
+                <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col items-center lg:items-center">
+                    {/* Header Section */}
+                    <div className="mb-10 text-center space-y-4 animate-fade-in-down w-full max-w-2xl mx-auto">
+                        <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 mb-4 backdrop-blur-sm shadow-inner group-hover:scale-105 transition-transform">
+                            <Activity className="w-8 h-8 text-primary" />
                         </div>
-
-                        <button
-                            onClick={isRecording ? stopRecording : startRecording}
-                            disabled={!isConnected}
-                            className={`
-                                relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500 
-                                ${!isConnected ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110 active:scale-95 cursor-pointer'}
-                            `}
-                        >
-                            {/* Button Background/Glow */}
-                            <div className={`absolute inset-0 rounded-full transition-all duration-500 ${isRecording
-                                ? 'bg-gradient-to-tr from-rose-500 to-red-600 shadow-[0_0_60px_-10px_rgba(225,29,72,0.6)]'
-                                : 'bg-gradient-to-tr from-foreground to-foreground/80 shadow-2xl border border-white/10'
-                                }`} />
-
-                            {/* Ripple Effect when recording */}
-                            {isRecording && (
-                                <>
-                                    <div className="absolute inset-0 rounded-full border-2 border-rose-500/50 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
-                                    <div className="absolute inset-0 rounded-full border border-rose-500/30 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite_0.5s]" />
-                                </>
-                            )}
-
-                            {/* Icon */}
-                            <div className={`relative z-10 transition-colors duration-300 ${isRecording ? 'text-white' : 'text-background'}`}>
-                                {isRecording ? (
-                                    <div className="w-10 h-10 rounded-lg bg-white shadow-lg animate-[pulse_2s_infinite]" />
-                                ) : (
-                                    <Mic className="w-12 h-12" />
-                                )}
-                            </div>
-                        </button>
-
-                        <p className="text-sm text-muted-foreground/80 font-medium uppercase tracking-widest">
-                            {isRecording ? 'Broadcasting...' : 'Tap to Stream'}
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 drop-shadow-sm pb-2">
+                            Live Voice Stream
+                        </h1>
+                        <p className="text-lg text-muted-foreground max-w-lg mx-auto font-light tracking-wide">
+                            High-fidelity, low-latency audio transmission
                         </p>
                     </div>
 
-                    {/* Stats & Captions */}
-                    <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Main Visualizer Area */}
+                    <div className="w-full mb-12 relative group max-w-4xl mx-auto">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                        <div className="relative glass-panel rounded-[2.5rem] p-8 overflow-hidden border border-white/10 shadow-2xl bg-black/40 backdrop-blur-xl">
+                            <VoiceVisualizer audioLevel={audioLevel} isRecording={isRecording} />
+                        </div>
+                    </div>
+
+                    {/* Controls Grid */}
+                    <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        {/* Recording Button Area */}
+                        <div className="flex flex-col items-center gap-6 order-2 md:order-1">
+                            <div className={`font-mono text-4xl font-bold transition-all duration-500 tabular-nums ${isRecording ? 'opacity-100 text-foreground' : 'opacity-30 text-muted-foreground'}`}>
+                                {formatDuration(duration)}
+                            </div>
+
+                            <button
+                                onClick={isRecording ? stopRecording : startRecording}
+                                disabled={!isConnected}
+                                className={`
+                                    relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500 
+                                    ${!isConnected ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110 active:scale-95 cursor-pointer'}
+                                `}
+                            >
+                                <div className={`absolute inset-0 rounded-full transition-all duration-500 ${isRecording
+                                    ? 'bg-gradient-to-tr from-rose-500 to-red-600 shadow-[0_0_60px_-10px_rgba(225,29,72,0.6)]'
+                                    : 'bg-gradient-to-tr from-foreground to-foreground/80 shadow-2xl border border-white/10'
+                                    }`} />
+
+                                {isRecording && (
+                                    <>
+                                        <div className="absolute inset-0 rounded-full border-2 border-rose-500/50 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                                        <div className="absolute inset-0 rounded-full border border-rose-500/30 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite_0.5s]" />
+                                    </>
+                                )}
+
+                                <div className={`relative z-10 transition-colors duration-300 ${isRecording ? 'text-white' : 'text-background'}`}>
+                                    {isRecording ? (
+                                        <div className="w-10 h-10 rounded-lg bg-white shadow-lg animate-[pulse_2s_infinite]" />
+                                    ) : (
+                                        <Mic className="w-12 h-12" />
+                                    )}
+                                </div>
+                            </button>
+                            <p className="text-sm text-muted-foreground/80 font-medium uppercase tracking-widest">
+                                {isRecording ? 'Broadcasting' : 'Start Stream'}
+                            </p>
+                        </div>
+
                         {/* Stats Panel */}
-                        <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center items-center text-center">
-                            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Stream Stats</div>
-                            <div className="font-mono text-xs text-foreground/80 space-y-1">
+                        <div className="glass-panel p-8 rounded-3xl flex flex-col justify-center items-center text-center h-full min-h-[200px] order-1 md:order-2 bg-white/5 border border-white/5 shadow-xl hover:bg-white/10 transition-colors">
+                            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">Network Statistics</div>
+                            <div className="font-mono text-sm text-foreground/80 space-y-4 w-full px-4">
                                 {audioProgress ? (
                                     <>
-                                        <div className="flex justify-between w-full gap-4"><span>Chunk Size:</span> <span className="text-primary">{audioProgress.chunkBytes} B</span></div>
-                                        <div className="flex justify-between w-full gap-4"><span>Total Data:</span> <span className="text-primary">{(audioProgress.totalBytes / 1024).toFixed(1)} KB</span></div>
-                                        <div className="flex justify-between w-full gap-4"><span>Packets:</span> <span className="text-primary">{audioProgress.totalChunks}</span></div>
+                                        <div className="flex justify-between w-full items-center border-b border-white/5 pb-2">
+                                            <span className="text-xs text-muted-foreground uppercase">Chunk Size</span>
+                                            <span className="text-primary font-bold">{audioProgress.chunkBytes} B</span>
+                                        </div>
+                                        <div className="flex justify-between w-full items-center border-b border-white/5 pb-2">
+                                            <span className="text-xs text-muted-foreground uppercase">Total Data</span>
+                                            <span className="text-primary font-bold">{(audioProgress.totalBytes / 1024).toFixed(1)} KB</span>
+                                        </div>
+                                        <div className="flex justify-between w-full items-center">
+                                            <span className="text-xs text-muted-foreground uppercase">Packets</span>
+                                            <span className="text-primary font-bold">{audioProgress.totalChunks}</span>
+                                        </div>
                                     </>
                                 ) : (
-                                    <p className="opacity-50">No data transmitted yet</p>
+                                    <div className="flex flex-col items-center gap-3 opacity-40 py-4">
+                                        <Wifi className="w-8 h-8" />
+                                        <p>No stream data</p>
+                                    </div>
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        {/* Captions Panel */}
-                        <div className="glass-panel p-6 rounded-2xl min-h-[120px]">
-                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                Live Captions
+                {/* Right Column: Captions */}
+                <div className="w-full lg:w-[420px] shrink-0 h-[600px] lg:h-[calc(100vh-140px)] sticky top-24">
+                    <div className="glass-panel h-full rounded-2xl p-0 overflow-hidden border border-white/10 bg-black/40 backdrop-blur-md flex flex-col shadow-2xl">
+                        {/* Caption Header */}
+                        <div className="p-5 border-b border-white/10 bg-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                <span className="font-bold text-sm uppercase tracking-wider">Live Transcripts</span>
                             </div>
+                            <span className="bg-white/10 text-[10px] font-mono px-2 py-1 rounded text-muted-foreground">REAL-TIME</span>
+                        </div>
 
-                            <div className="h-24 overflow-y-auto custom-scrollbar">
-                                {captions.length > 0 ? (
-                                    <ul className="space-y-2 text-sm">
-                                        {captions.slice(-6).map((caption) => (
-                                            <li key={`${caption.chunkIndex}-${caption.text}`} className="text-foreground/90 leading-relaxed animate-fade-in-up">
-                                                <span className="text-[10px] font-mono text-primary/70 mr-2">
-                                                    #{caption.chunkIndex}
-                                                </span>
+                        {/* Caption Content */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
+                            {captions.length > 0 ? (
+                                <div className="space-y-4">
+                                    {captions.map((caption, idx) => (
+                                        <div key={`${caption.chunkIndex}-${idx}`} className="animate-fade-in-up flex gap-3 group">
+                                            <span className="text-[10px] font-mono text-muted-foreground/50 pt-1 select-none w-6 flex-shrink-0">
+                                                {(idx + 1).toString().padStart(2, '0')}
+                                            </span>
+                                            <div className="p-3 rounded-r-xl rounded-bl-xl bg-white/5 border border-white/5 text-sm leading-relaxed text-foreground/90 group-hover:bg-white/10 transition-colors">
                                                 {caption.text}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground/50 italic">
-                                        Waiting for speech...
-                                    </p>
-                                )}
-                            </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="h-4" /> {/* Spacer */}
+                                </div>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center animate-pulse">
+                                        <Activity className="w-8 h-8 text-muted-foreground/50" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Waiting for speech...</p>
+                                        <p className="text-xs text-muted-foreground/50 mt-1">Start recording and speak to generate captions.</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Caption Footer/Status */}
+                        <div className="p-3 bg-white/5 border-t border-white/10 text-[10px] text-center text-muted-foreground/60 font-mono uppercase tracking-widest">
+                            {isRecording ? 'Listening for speech...' : 'Microphone Idle'}
                         </div>
                     </div>
                 </div>
