@@ -5,7 +5,7 @@ export default function HeroTitle() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
 
       {/* Main Title */}
-      <h1 className="relative z-10 text-6xl sm:text-7xl md:text-9xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground via-foreground/80 to-foreground/40 dark:from-white dark:via-white/90 dark:to-white/50 drop-shadow-sm filter backdrop-blur-[1px]">
+      <h1 className="relative z-10 text-6xl sm:text-7xl md:text-9xl font-extrabold tracking-tighter text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:via-white/90 dark:to-white/50 drop-shadow-sm">
         VoiceStream
       </h1>
 

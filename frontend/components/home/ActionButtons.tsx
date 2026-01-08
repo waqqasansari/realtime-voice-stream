@@ -26,7 +26,7 @@ export default function ActionButtons() {
       </button>
 
       {/* Secondary Ghost Button */}
-      <button className="flex items-center gap-2 px-8 py-4 rounded-full bg-white/5 dark:bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 dark:hover:bg-white/10 text-foreground transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+      <button className="flex items-center gap-2 px-8 py-4 rounded-full bg-secondary hover:bg-secondary/80 dark:bg-white/5 dark:hover:bg-white/10 text-foreground transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5">
         <BookOpen className="w-4 h-4 text-accent" />
         <span>View Documentation</span>
       </button>

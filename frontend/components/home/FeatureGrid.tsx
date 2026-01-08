@@ -12,7 +12,7 @@ export default function FeatureGrid() {
       {features.map((feature, index) => (
         <div
           key={feature.label}
-          className="group relative flex flex-col items-center justify-center p-8 rounded-3xl bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 overflow-hidden hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]"
+          className="group relative flex flex-col items-center justify-center p-8 rounded-3xl bg-card backdrop-blur-sm border border-card-border overflow-hidden hover:bg-card/80 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]"
           style={{ animationDelay: `${index * 100}ms` }}
         >
           {/* Hover Gradient Background */}
