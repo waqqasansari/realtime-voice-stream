@@ -179,43 +179,44 @@ export default function StreamPage() {
                 </div>
             </div>
 
-            <main className="relative z-10 w-full max-w-[95rem] px-4 md:px-8 mx-auto py-8 lg:py-12 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center min-h-[calc(100vh-100px)]">
+            <main className="relative z-10 w-full max-w-[95rem] px-4 md:px-8 mx-auto py-6 lg:py-8 flex flex-col lg:flex-row gap-6 lg:gap-8 items-start justify-center min-h-[calc(100vh-100px)]">
                 {/* Left Column: Visuals & Controls */}
-                <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col items-center lg:items-center">
-                    {/* Header Section */}
-                    <div className="mb-10 text-center space-y-4 animate-fade-in-down w-full max-w-2xl mx-auto">
-                        <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 mb-4 backdrop-blur-sm shadow-inner group-hover:scale-105 transition-transform">
-                            <Activity className="w-8 h-8 text-primary" />
+                <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col items-center">
+                    {/* Header Section - More Compact */}
+                    <div className="mb-6 text-center space-y-2 animate-fade-in-down w-full max-w-2xl mx-auto">
+                        <div className="inline-flex items-center justify-center p-2 rounded-xl bg-white/5 border border-white/10 mb-2 backdrop-blur-sm">
+                            <Activity className="w-6 h-6 text-primary" />
                         </div>
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 drop-shadow-sm pb-2">
+                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 drop-shadow-sm">
                             Live Voice Stream
                         </h1>
-                        <p className="text-lg text-muted-foreground max-w-lg mx-auto font-light tracking-wide">
+                        <p className="text-sm text-muted-foreground max-w-lg mx-auto font-light tracking-wide">
                             High-fidelity, low-latency audio transmission
                         </p>
                     </div>
 
                     {/* Main Visualizer Area */}
-                    <div className="w-full mb-12 relative group max-w-4xl mx-auto">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                        <div className="relative glass-panel rounded-[2.5rem] p-8 overflow-hidden border border-white/10 shadow-2xl bg-black/40 backdrop-blur-xl">
+                    <div className="w-full mb-6 relative group max-w-4xl mx-auto">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-3xl blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                        <div className="relative glass-panel rounded-3xl p-6 overflow-hidden border border-white/10 shadow-2xl bg-black/40 backdrop-blur-xl">
                             <VoiceVisualizer audioLevel={audioLevel} isRecording={isRecording} />
                         </div>
                     </div>
 
-                    {/* Controls Grid */}
-                    <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                        {/* Recording Button Area */}
-                        <div className="flex flex-col items-center gap-6 order-2 md:order-1">
-                            <div className={`font-mono text-4xl font-bold transition-all duration-500 tabular-nums ${isRecording ? 'opacity-100 text-foreground' : 'opacity-30 text-muted-foreground'}`}>
-                                {formatDuration(duration)}
-                            </div>
+                    {/* Duration Display - Centered Above Controls */}
+                    <div className={`font-mono text-5xl font-bold transition-all duration-500 tabular-nums mb-6 ${isRecording ? 'opacity-100 text-foreground' : 'opacity-30 text-muted-foreground'}`}>
+                        {formatDuration(duration)}
+                    </div>
 
+                    {/* Controls - Horizontal Layout */}
+                    <div className="w-full max-w-4xl flex flex-col md:flex-row gap-6 items-center justify-center">
+                        {/* Recording Button */}
+                        <div className="flex flex-col items-center gap-4">
                             <button
                                 onClick={isRecording ? stopRecording : startRecording}
                                 disabled={!isConnected}
                                 className={`
-                                    relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500 
+                                    relative w-32 h-32 rounded-full flex items-center justify-center transition-all duration-500 
                                     ${!isConnected ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110 active:scale-95 cursor-pointer'}
                                 `}
                             >
@@ -233,9 +234,9 @@ export default function StreamPage() {
 
                                 <div className={`relative z-10 transition-colors duration-300 ${isRecording ? 'text-white' : 'text-background'}`}>
                                     {isRecording ? (
-                                        <div className="w-10 h-10 rounded-lg bg-white shadow-lg animate-[pulse_2s_infinite]" />
+                                        <div className="w-12 h-12 rounded-lg bg-white shadow-lg animate-[pulse_2s_infinite]" />
                                     ) : (
-                                        <Mic className="w-12 h-12" />
+                                        <Mic className="w-14 h-14" />
                                     )}
                                 </div>
                             </button>
@@ -244,29 +245,29 @@ export default function StreamPage() {
                             </p>
                         </div>
 
-                        {/* Stats Panel */}
-                        <div className="glass-panel p-8 rounded-3xl flex flex-col justify-center items-center text-center h-full min-h-[200px] order-1 md:order-2 bg-white/5 border border-white/5 shadow-xl hover:bg-white/10 transition-colors">
-                            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">Network Statistics</div>
-                            <div className="font-mono text-sm text-foreground/80 space-y-4 w-full px-4">
+                        {/* Stats Panel - Horizontal */}
+                        <div className="glass-panel p-6 rounded-2xl flex-1 max-w-md bg-white/5 border border-white/5 shadow-xl hover:bg-white/10 transition-colors">
+                            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Network Statistics</div>
+                            <div className="font-mono text-sm text-foreground/80 space-y-3">
                                 {audioProgress ? (
                                     <>
-                                        <div className="flex justify-between w-full items-center border-b border-white/5 pb-2">
+                                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
                                             <span className="text-xs text-muted-foreground uppercase">Chunk Size</span>
                                             <span className="text-primary font-bold">{audioProgress.chunkBytes} B</span>
                                         </div>
-                                        <div className="flex justify-between w-full items-center border-b border-white/5 pb-2">
+                                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
                                             <span className="text-xs text-muted-foreground uppercase">Total Data</span>
                                             <span className="text-primary font-bold">{(audioProgress.totalBytes / 1024).toFixed(1)} KB</span>
                                         </div>
-                                        <div className="flex justify-between w-full items-center">
+                                        <div className="flex justify-between items-center">
                                             <span className="text-xs text-muted-foreground uppercase">Packets</span>
                                             <span className="text-primary font-bold">{audioProgress.totalChunks}</span>
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="flex flex-col items-center gap-3 opacity-40 py-4">
-                                        <Wifi className="w-8 h-8" />
-                                        <p>No stream data</p>
+                                    <div className="flex items-center gap-3 opacity-40 py-2">
+                                        <Wifi className="w-6 h-6" />
+                                        <p className="text-xs">No stream data</p>
                                     </div>
                                 )}
                             </div>
