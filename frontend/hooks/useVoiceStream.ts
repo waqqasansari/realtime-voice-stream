@@ -86,24 +86,14 @@ export default function useVoiceStream() {
                     if (payload.type === "audio_progress") {
                         setAudioProgress(payload);
                     } else if (payload.type === "transcript_update" || payload.type === "chunk_caption") {
-                        setTranscript((prev) => {
-                            const incoming = payload.text.trim();
-                            const last = lastTranscriptRef.current.trim();
-
-                            if (!incoming) {
-                                return prev;
-                            }
-
-                            if (last && incoming.startsWith(last)) {
-                                const delta = incoming.slice(last.length).trim();
-                                const next = delta ? `${prev} ${delta}` : prev;
-                                lastTranscriptRef.current = incoming;
-                                return next.trim();
-                            }
-
+                        // The backend sends the full cumulative transcript each time
+                        // (it transcribes the entire audio buffer from the start).
+                        // So we should just use the latest transcript as-is.
+                        const incoming = payload.text.trim();
+                        if (incoming) {
+                            setTranscript(incoming);
                             lastTranscriptRef.current = incoming;
-                            return incoming;
-                        });
+                        }
                     }
                 } catch (error) {
                     console.warn("Unable to parse WebSocket message:", error);
