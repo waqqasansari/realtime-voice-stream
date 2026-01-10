@@ -33,6 +33,7 @@ export default function useVoiceStream() {
     const [isConnected, setIsConnected] = useState(false);
     const [audioProgress, setAudioProgress] = useState<AudioProgress | null>(null);
     const [transcript, setTranscript] = useState("");
+    const lastTranscriptRef = useRef("");
 
     // Refs to persist values across renders without triggering re-renders
     const websocketRef = useRef<WebSocket | null>(null);
@@ -85,7 +86,24 @@ export default function useVoiceStream() {
                     if (payload.type === "audio_progress") {
                         setAudioProgress(payload);
                     } else if (payload.type === "transcript_update") {
-                        setTranscript(payload.text);
+                        setTranscript((prev) => {
+                            const incoming = payload.text.trim();
+                            const last = lastTranscriptRef.current.trim();
+
+                            if (!incoming) {
+                                return prev;
+                            }
+
+                            if (last && incoming.startsWith(last)) {
+                                const delta = incoming.slice(last.length).trim();
+                                const next = delta ? `${prev} ${delta}` : prev;
+                                lastTranscriptRef.current = incoming;
+                                return next.trim();
+                            }
+
+                            lastTranscriptRef.current = incoming;
+                            return incoming;
+                        });
                     }
                 } catch (error) {
                     console.warn("Unable to parse WebSocket message:", error);
@@ -164,6 +182,7 @@ export default function useVoiceStream() {
     const clearAudioProgress = () => {
         setAudioProgress(null);
         setTranscript("");
+        lastTranscriptRef.current = "";
     };
 
     return {
