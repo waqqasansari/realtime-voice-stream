@@ -25,7 +25,7 @@ export default function StreamPage() {
         clearAudioProgress,
         isConnected,
         audioProgress,
-        captions,
+        transcript,
     } = useVoiceStream();
 
     // Cleanup on unmount
@@ -289,18 +289,16 @@ export default function StreamPage() {
 
                         {/* Caption Content */}
                         <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
-                            {captions.length > 0 ? (
+                            {transcript ? (
                                 <div className="space-y-4">
-                                    {captions.map((caption, idx) => (
-                                        <div key={`${caption.chunkIndex}-${idx}`} className="animate-fade-in-up flex gap-3 group">
-                                            <span className="text-[10px] font-mono text-muted-foreground/50 pt-1 select-none w-6 flex-shrink-0">
-                                                {(idx + 1).toString().padStart(2, '0')}
-                                            </span>
-                                            <div className="p-3 rounded-r-xl rounded-bl-xl bg-white/5 border border-white/5 text-sm leading-relaxed text-foreground/90 group-hover:bg-white/10 transition-colors">
-                                                {caption.text}
-                                            </div>
+                                    <div className="animate-fade-in-up flex gap-3 group">
+                                        <span className="text-[10px] font-mono text-muted-foreground/50 pt-1 select-none w-6 flex-shrink-0">
+                                            01
+                                        </span>
+                                        <div className="p-3 rounded-r-xl rounded-bl-xl bg-white/5 border border-white/5 text-sm leading-relaxed text-foreground/90 group-hover:bg-white/10 transition-colors">
+                                            {transcript}
                                         </div>
-                                    ))}
+                                    </div>
                                     <div className="h-4" /> {/* Spacer */}
                                 </div>
                             ) : (

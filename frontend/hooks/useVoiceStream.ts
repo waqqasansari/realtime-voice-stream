@@ -18,8 +18,8 @@ type AudioProgress = {
 /**
  * Type defining the structure of simulated captions received from the server.
  */
-type ChunkCaption = {
-    type: "chunk_caption";
+type TranscriptUpdate = {
+    type: "transcript_update";
     chunkIndex: number;
     text: string;
 };
@@ -32,7 +32,7 @@ export default function useVoiceStream() {
     // UI state for connection status and incoming data
     const [isConnected, setIsConnected] = useState(false);
     const [audioProgress, setAudioProgress] = useState<AudioProgress | null>(null);
-    const [captions, setCaptions] = useState<ChunkCaption[]>([]);
+    const [transcript, setTranscript] = useState("");
 
     // Refs to persist values across renders without triggering re-renders
     const websocketRef = useRef<WebSocket | null>(null);
@@ -79,14 +79,13 @@ export default function useVoiceStream() {
             // Handler for incoming messages from the backend
             ws.onmessage = (event) => {
                 try {
-                    const payload = JSON.parse(event.data) as AudioProgress | ChunkCaption;
+                    const payload = JSON.parse(event.data) as AudioProgress | TranscriptUpdate;
 
                     // Route the message based on its 'type' property
                     if (payload.type === "audio_progress") {
                         setAudioProgress(payload);
-                    } else if (payload.type === "chunk_caption") {
-                        // Append new captions to the existing list
-                        setCaptions((prev) => [...prev, payload]);
+                    } else if (payload.type === "transcript_update") {
+                        setTranscript(payload.text);
                     }
                 } catch (error) {
                     console.warn("Unable to parse WebSocket message:", error);
@@ -164,13 +163,13 @@ export default function useVoiceStream() {
      */
     const clearAudioProgress = () => {
         setAudioProgress(null);
-        setCaptions([]);
+        setTranscript("");
     };
 
     return {
         isConnected,
         audioProgress,
-        captions,
+        transcript,
         sendAudioData,
         sendMetadata,
         sendControl,

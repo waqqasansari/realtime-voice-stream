@@ -106,19 +106,15 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                 if chunk_count % TRANSCRIBE_EVERY_CHUNKS == 0:
                     audio_snapshot = bytes(audio_buffer)
                     result = await asyncio.to_thread(transcriber.transcribe, audio_snapshot)
-                    if result.text:
-                        delta = result.text
-                        if last_transcript and result.text.startswith(last_transcript):
-                            delta = result.text[len(last_transcript):].strip()
-                        if delta:
-                            last_transcript = result.text
-                            await websocket.send_json(
-                                {
-                                    "type": "chunk_caption",
-                                    "chunkIndex": chunk_count,
-                                    "text": delta,
-                                }
-                            )
+                    if result.text and result.text != last_transcript:
+                        last_transcript = result.text
+                        await websocket.send_json(
+                            {
+                                "type": "transcript_update",
+                                "chunkIndex": chunk_count,
+                                "text": result.text,
+                            }
+                        )
 
                 continue
 
@@ -163,9 +159,10 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                             transcriber.transcribe, bytes(audio_buffer)
                         )
                         if result.text and result.text != last_transcript:
+                            last_transcript = result.text
                             await websocket.send_json(
                                 {
-                                    "type": "chunk_caption",
+                                    "type": "transcript_update",
                                     "chunkIndex": chunk_count,
                                     "text": result.text,
                                 }
