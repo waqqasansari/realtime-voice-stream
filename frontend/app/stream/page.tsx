@@ -140,7 +140,6 @@ export default function StreamPage() {
 
         setIsRecording(false);
         setAudioLevel(0);
-        clearAudioProgress();
         sendControl("stream_end");
     };
 

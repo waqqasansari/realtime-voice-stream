@@ -19,7 +19,7 @@ type AudioProgress = {
  * Type defining the structure of simulated captions received from the server.
  */
 type TranscriptUpdate = {
-    type: "transcript_update";
+    type: "transcript_update" | "chunk_caption";
     chunkIndex: number;
     text: string;
 };
@@ -85,7 +85,7 @@ export default function useVoiceStream() {
                     // Route the message based on its 'type' property
                     if (payload.type === "audio_progress") {
                         setAudioProgress(payload);
-                    } else if (payload.type === "transcript_update") {
+                    } else if (payload.type === "transcript_update" || payload.type === "chunk_caption") {
                         setTranscript((prev) => {
                             const incoming = payload.text.trim();
                             const last = lastTranscriptRef.current.trim();
