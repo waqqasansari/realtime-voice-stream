@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from datetime import datetime, timezone
@@ -6,7 +7,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.services.voice_stream import generate_dummy_caption
+from app.services.voice_stream import transcriber
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
@@ -14,11 +15,13 @@ logger = logging.getLogger(__name__)
 # Create an APIRouter for websocket endpoints, prefixed with /ws
 router = APIRouter(prefix="/ws", tags=["voice-stream"])
 
+TRANSCRIBE_EVERY_CHUNKS = 10
+
 
 def persist_recording(buffer: bytearray, meta: dict[str, str]) -> None:
     """
     Saves the accumulated audio buffer and its metadata to the local filesystem.
-    
+
     Args:
         buffer: The raw audio bytes accumulated during the stream.
         meta: A dictionary containing metadata about the recording (e.g., mimeType).
@@ -60,7 +63,7 @@ def persist_recording(buffer: bytearray, meta: dict[str, str]) -> None:
 async def handle_voice_stream(websocket: WebSocket) -> None:
     """
     WebSocket endpoint that receives streamed audio bytes and metadata.
-    
+
     Workflow:
     1. Accepts the WebSocket connection.
     2. Enters a loop to receive messages:
@@ -74,6 +77,7 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
     audio_buffer = bytearray()
     chunk_count = 0
     metadata: dict[str, str] = {}
+    last_transcript = ""
 
     try:
         while True:
@@ -85,10 +89,7 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                 chunk = message["bytes"]
                 audio_buffer.extend(chunk)
                 chunk_count += 1
-                
-                # Generate a mock caption for the received chunk
-                dummy_caption = generate_dummy_caption(chunk_count)
-                
+
                 try:
                     # Provide feedback to the client about the stream progress
                     await websocket.send_json(
@@ -99,16 +100,22 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                             "totalChunks": chunk_count,
                         }
                     )
-                    # Send the simulated caption back to the client
-                    await websocket.send_json(
-                        {
-                            "type": "chunk_caption",
-                            "chunkIndex": chunk_count,
-                            "text": dummy_caption,
-                        }
-                    )
                 except RuntimeError as exc:
                     logger.warning("Failed to send progress update: %s", exc)
+
+                if chunk_count % TRANSCRIBE_EVERY_CHUNKS == 0:
+                    audio_snapshot = bytes(audio_buffer)
+                    result = await asyncio.to_thread(transcriber.transcribe, audio_snapshot)
+                    if result.text and result.text != last_transcript:
+                        last_transcript = result.text
+                        await websocket.send_json(
+                            {
+                                "type": "transcript_update",
+                                "chunkIndex": chunk_count,
+                                "text": result.text,
+                            }
+                        )
+
                 continue
 
             # Handle Text Data (Control Messages / Metadata)
@@ -120,14 +127,15 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                 # Parse the incoming JSON message
                 payload = json.loads(text_payload)
                 message_type = payload.get("type")
-                
+
                 if message_type == "stream_start":
                     # Initialize/Reset session state for a new stream
                     audio_buffer.clear()
                     chunk_count = 0
                     metadata.clear()
                     metadata.update(payload.get("metadata", {}))
-                    
+                    last_transcript = ""
+
                     await websocket.send_json(
                         {
                             "type": "audio_progress",
@@ -138,19 +146,34 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                     )
                     logger.info("Voice stream started with metadata: %s", metadata)
                     continue
-                    
+
                 if message_type == "stream_end":
                     # Finalize the stream and save data
                     logger.info(
                         "Voice stream ended; persisting %d bytes", len(audio_buffer)
                     )
                     persist_recording(audio_buffer, metadata)
-                    
+
+                    if audio_buffer:
+                        result = await asyncio.to_thread(
+                            transcriber.transcribe, bytes(audio_buffer)
+                        )
+                        if result.text and result.text != last_transcript:
+                            last_transcript = result.text
+                            await websocket.send_json(
+                                {
+                                    "type": "transcript_update",
+                                    "chunkIndex": chunk_count,
+                                    "text": result.text,
+                                }
+                            )
+
                     # Clear session state after saving
                     audio_buffer.clear()
                     chunk_count = 0
                     metadata.clear()
-                    
+                    last_transcript = ""
+
                     await websocket.send_json(
                         {
                             "type": "audio_progress",
@@ -167,9 +190,9 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                 else:
                     # Fallback for unexpected or legacy formats
                     metadata = payload
-                    
+
                 logger.info("Received voice stream metadata: %s", metadata)
-                
+
             except json.JSONDecodeError:
                 logger.info(
                     "Received non-JSON message on voice stream: %s", text_payload

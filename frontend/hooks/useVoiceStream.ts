@@ -18,8 +18,8 @@ type AudioProgress = {
 /**
  * Type defining the structure of simulated captions received from the server.
  */
-type ChunkCaption = {
-    type: "chunk_caption";
+type TranscriptUpdate = {
+    type: "transcript_update" | "chunk_caption";
     chunkIndex: number;
     text: string;
 };
@@ -32,7 +32,8 @@ export default function useVoiceStream() {
     // UI state for connection status and incoming data
     const [isConnected, setIsConnected] = useState(false);
     const [audioProgress, setAudioProgress] = useState<AudioProgress | null>(null);
-    const [captions, setCaptions] = useState<ChunkCaption[]>([]);
+    const [transcript, setTranscript] = useState("");
+    const lastTranscriptRef = useRef("");
 
     // Refs to persist values across renders without triggering re-renders
     const websocketRef = useRef<WebSocket | null>(null);
@@ -79,14 +80,30 @@ export default function useVoiceStream() {
             // Handler for incoming messages from the backend
             ws.onmessage = (event) => {
                 try {
-                    const payload = JSON.parse(event.data) as AudioProgress | ChunkCaption;
+                    const payload = JSON.parse(event.data) as AudioProgress | TranscriptUpdate;
 
                     // Route the message based on its 'type' property
                     if (payload.type === "audio_progress") {
                         setAudioProgress(payload);
-                    } else if (payload.type === "chunk_caption") {
-                        // Append new captions to the existing list
-                        setCaptions((prev) => [...prev, payload]);
+                    } else if (payload.type === "transcript_update" || payload.type === "chunk_caption") {
+                        setTranscript((prev) => {
+                            const incoming = payload.text.trim();
+                            const last = lastTranscriptRef.current.trim();
+
+                            if (!incoming) {
+                                return prev;
+                            }
+
+                            if (last && incoming.startsWith(last)) {
+                                const delta = incoming.slice(last.length).trim();
+                                const next = delta ? `${prev} ${delta}` : prev;
+                                lastTranscriptRef.current = incoming;
+                                return next.trim();
+                            }
+
+                            lastTranscriptRef.current = incoming;
+                            return incoming;
+                        });
                     }
                 } catch (error) {
                     console.warn("Unable to parse WebSocket message:", error);
@@ -164,13 +181,14 @@ export default function useVoiceStream() {
      */
     const clearAudioProgress = () => {
         setAudioProgress(null);
-        setCaptions([]);
+        setTranscript("");
+        lastTranscriptRef.current = "";
     };
 
     return {
         isConnected,
         audioProgress,
-        captions,
+        transcript,
         sendAudioData,
         sendMetadata,
         sendControl,
