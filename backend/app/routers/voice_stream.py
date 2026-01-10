@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.services.voice_stream import transcriber
+from app.services.voice_stream import decode_audio_bytes, transcriber
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
@@ -78,6 +78,7 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
     chunk_count = 0
     metadata: dict[str, str] = {}
     last_transcript = ""
+    last_sample_count = 0
 
     try:
         while True:
@@ -105,16 +106,30 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
 
                 if chunk_count % TRANSCRIBE_EVERY_CHUNKS == 0:
                     audio_snapshot = bytes(audio_buffer)
-                    result = await asyncio.to_thread(transcriber.transcribe, audio_snapshot)
-                    if result.text and result.text != last_transcript:
-                        last_transcript = result.text
-                        await websocket.send_json(
-                            {
-                                "type": "transcript_update",
-                                "chunkIndex": chunk_count,
-                                "text": result.text,
-                            }
+                    decoded_audio = await asyncio.to_thread(
+                        decode_audio_bytes, audio_snapshot
+                    )
+                    if decoded_audio.size > last_sample_count:
+                        new_audio = decoded_audio[last_sample_count:]
+                        last_sample_count = decoded_audio.size
+                        result = await asyncio.to_thread(
+                            transcriber.transcribe_audio, new_audio
                         )
+                        if result.text:
+                            updated_transcript = " ".join(
+                                part
+                                for part in (last_transcript, result.text.strip())
+                                if part
+                            )
+                            if updated_transcript != last_transcript:
+                                last_transcript = updated_transcript
+                                await websocket.send_json(
+                                    {
+                                        "type": "transcript_update",
+                                        "chunkIndex": chunk_count,
+                                        "text": last_transcript,
+                                    }
+                                )
 
                 continue
 
@@ -135,6 +150,7 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                     metadata.clear()
                     metadata.update(payload.get("metadata", {}))
                     last_transcript = ""
+                    last_sample_count = 0
 
                     await websocket.send_json(
                         {
@@ -155,24 +171,37 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                     persist_recording(audio_buffer, metadata)
 
                     if audio_buffer:
-                        result = await asyncio.to_thread(
-                            transcriber.transcribe, bytes(audio_buffer)
+                        decoded_audio = await asyncio.to_thread(
+                            decode_audio_bytes, bytes(audio_buffer)
                         )
-                        if result.text and result.text != last_transcript:
-                            last_transcript = result.text
-                            await websocket.send_json(
-                                {
-                                    "type": "transcript_update",
-                                    "chunkIndex": chunk_count,
-                                    "text": result.text,
-                                }
+                        if decoded_audio.size > last_sample_count:
+                            new_audio = decoded_audio[last_sample_count:]
+                            last_sample_count = decoded_audio.size
+                            result = await asyncio.to_thread(
+                                transcriber.transcribe_audio, new_audio
                             )
+                            if result.text:
+                                updated_transcript = " ".join(
+                                    part
+                                    for part in (last_transcript, result.text.strip())
+                                    if part
+                                )
+                                if updated_transcript != last_transcript:
+                                    last_transcript = updated_transcript
+                                    await websocket.send_json(
+                                        {
+                                            "type": "transcript_update",
+                                            "chunkIndex": chunk_count,
+                                            "text": last_transcript,
+                                        }
+                                    )
 
                     # Clear session state after saving
                     audio_buffer.clear()
                     chunk_count = 0
                     metadata.clear()
                     last_transcript = ""
+                    last_sample_count = 0
 
                     await websocket.send_json(
                         {

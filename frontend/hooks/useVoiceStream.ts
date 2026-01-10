@@ -86,8 +86,7 @@ export default function useVoiceStream() {
                     if (payload.type === "audio_progress") {
                         setAudioProgress(payload);
                     } else if (payload.type === "transcript_update" || payload.type === "chunk_caption") {
-                        // The backend sends the full cumulative transcript each time
-                        // (it transcribes the entire audio buffer from the start).
+                        // The backend sends a full cumulative transcript each time.
                         // So we should just use the latest transcript as-is.
                         const incoming = payload.text.trim();
                         if (incoming) {
