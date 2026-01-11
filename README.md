@@ -14,13 +14,13 @@ Real-time voice streaming and transcription application using WebSocket communic
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              FRONTEND (Next.js)                              │
+│                              FRONTEND (Next.js)                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  MediaRecorder (100ms chunks)  →  WebSocket  →  Display Transcripts         │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       ↕ WebSocket (ws://localhost:8080/ws/voice)
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              BACKEND (FastAPI)                               │
+│                              BACKEND (FastAPI)                              │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Receive Chunks  →  Buffer Audio  →  Whisper Transcription  →  Send Result  │
 └─────────────────────────────────────────────────────────────────────────────┘
