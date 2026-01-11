@@ -19,7 +19,7 @@ class TranscriptionResult:
     duration_seconds: float
 
 
-def _decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
+def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
     if not audio_bytes:
         return np.array([], dtype=np.float32)
 
@@ -84,7 +84,14 @@ class WhisperTranscriber:
         if self._processor is None or self._model is None or self._device is None:
             return TranscriptionResult(text="", duration_seconds=0.0)
 
-        audio = _decode_audio_bytes(audio_bytes)
+        audio = decode_audio_bytes(audio_bytes)
+        return self.transcribe_audio(audio)
+
+    def transcribe_audio(self, audio: np.ndarray) -> TranscriptionResult:
+        self._ensure_loaded()
+        if self._processor is None or self._model is None or self._device is None:
+            return TranscriptionResult(text="", duration_seconds=0.0)
+
         if audio.size == 0:
             return TranscriptionResult(text="", duration_seconds=0.0)
 
