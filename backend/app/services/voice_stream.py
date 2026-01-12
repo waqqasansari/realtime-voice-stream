@@ -9,7 +9,7 @@ from transformers import WhisperForConditionalGeneration, WhisperProcessor
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "openai/whisper-tiny"
+MODEL_NAME = "openai/whisper-base" # openai/whisper-base,openai/whisper-tiny 
 SAMPLE_RATE = 16000
 
 

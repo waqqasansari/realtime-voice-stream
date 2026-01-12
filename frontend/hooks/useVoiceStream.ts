@@ -16,12 +16,23 @@ type AudioProgress = {
 };
 
 /**
- * Type defining the structure of simulated captions received from the server.
+ * Type defining the structure of transcript updates received from the server.
  */
 type TranscriptUpdate = {
     type: "transcript_update" | "chunk_caption";
     chunkIndex: number;
     text: string;
+};
+
+/**
+ * Type for incremental chunk transcription (new format).
+ */
+type ChunkTranscript = {
+    type: "chunk_transcript";
+    chunkIndex: number;
+    chunkText: string;  // Just the new chunk
+    fullText: string;   // Full accumulated transcript
+    isFinal?: boolean;
 };
 
 /**
@@ -80,14 +91,20 @@ export default function useVoiceStream() {
             // Handler for incoming messages from the backend
             ws.onmessage = (event) => {
                 try {
-                    const payload = JSON.parse(event.data) as AudioProgress | TranscriptUpdate;
+                    const payload = JSON.parse(event.data) as AudioProgress | TranscriptUpdate | ChunkTranscript;
 
                     // Route the message based on its 'type' property
                     if (payload.type === "audio_progress") {
                         setAudioProgress(payload);
+                    } else if (payload.type === "chunk_transcript") {
+                        // New incremental format: backend sends chunk text + full accumulated text
+                        const incoming = payload.fullText.trim();
+                        if (incoming) {
+                            setTranscript(incoming);
+                            lastTranscriptRef.current = incoming;
+                        }
                     } else if (payload.type === "transcript_update" || payload.type === "chunk_caption") {
-                        // The backend sends a full cumulative transcript each time.
-                        // So we should just use the latest transcript as-is.
+                        // Legacy format support
                         const incoming = payload.text.trim();
                         if (incoming) {
                             setTranscript(incoming);
