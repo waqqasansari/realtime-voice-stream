@@ -16,12 +16,38 @@ import {
     ChevronRight,
     Signal,
     Sparkles,
-    AudioWaveform
+    AudioWaveform,
+    Waves
 } from "lucide-react";
 import VoiceVisualizer from "@/components/stream/VoiceVisualizer";
 import useVoiceStream from "@/hooks/useVoiceStream";
-import BackgroundBlobs from "@/components/home/BackgroundBlobs";
 import ThemeToggle from "@/components/home/ThemeToggle";
+
+// Animated floating orbs component
+const FloatingOrbs = ({ isRecording }: { isRecording: boolean }) => (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {/* Primary orb */}
+        <div className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-[120px] transition-all duration-1000 ${isRecording
+            ? 'bg-gradient-to-br from-rose-500/30 via-violet-500/20 to-fuchsia-500/30 animate-pulse'
+            : 'bg-gradient-to-br from-primary/20 via-accent/15 to-violet-500/20'
+            }`} style={{ animation: 'float 8s ease-in-out infinite' }} />
+
+        {/* Secondary orb */}
+        <div className={`absolute -bottom-48 -right-48 w-[500px] h-[500px] rounded-full blur-[140px] transition-all duration-1000 ${isRecording
+            ? 'bg-gradient-to-tl from-amber-500/20 via-rose-500/25 to-pink-500/20'
+            : 'bg-gradient-to-tl from-accent/15 via-primary/20 to-indigo-500/15'
+            }`} style={{ animation: 'float 10s ease-in-out infinite reverse' }} />
+
+        {/* Accent orb */}
+        <div className={`absolute top-1/3 right-1/4 w-64 h-64 rounded-full blur-[100px] transition-all duration-1000 ${isRecording
+            ? 'bg-violet-500/20 animate-pulse'
+            : 'bg-primary/10'
+            }`} style={{ animation: 'float 12s ease-in-out infinite', animationDelay: '-2s' }} />
+
+        {/* Grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
+    </div>
+);
 
 export default function StreamPage() {
     const router = useRouter();
@@ -167,7 +193,7 @@ export default function StreamPage() {
 
     return (
         <div className="min-h-screen relative overflow-hidden flex flex-col font-sans bg-background transition-colors duration-500">
-            <BackgroundBlobs />
+            <FloatingOrbs isRecording={isRecording} />
             <ThemeToggle />
 
             {/* Premium Top Navigation Bar */}
@@ -248,49 +274,74 @@ export default function StreamPage() {
 
                     {/* Main Visualizer Card */}
                     <div className="relative group mb-6">
-                        {/* Animated border glow */}
-                        <div className={`absolute -inset-0.5 rounded-3xl transition-all duration-1000 ${isRecording
-                            ? 'bg-gradient-to-r from-rose-500 via-violet-500 to-rose-500 opacity-60 blur-md animate-pulse'
-                            : 'bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 opacity-40 blur-md'
-                            }`} style={{ animationDuration: '2s' }} />
+                        {/* Animated gradient border */}
+                        <div className={`absolute -inset-[1px] rounded-[28px] transition-all duration-700 ${isRecording
+                            ? 'bg-[conic-gradient(from_var(--angle),theme(colors.rose.500),theme(colors.violet.500),theme(colors.fuchsia.500),theme(colors.rose.500))] opacity-100'
+                            : 'bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 opacity-50'
+                            }`}
+                            style={{
+                                '--angle': '0deg',
+                                animation: isRecording ? 'spin 3s linear infinite' : 'none'
+                            } as React.CSSProperties}
+                        />
 
-                        <div className="relative rounded-3xl bg-card dark:bg-secondary/30 backdrop-blur-2xl border border-card-border dark:border-white/10 overflow-hidden shadow-2xl">
-                            {/* Top bar */}
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-foreground/5 dark:border-white/5 bg-foreground/[0.02] dark:bg-white/5">
+                        {/* Outer glow */}
+                        <div className={`absolute -inset-2 rounded-[32px] blur-xl transition-all duration-700 ${isRecording
+                            ? 'bg-gradient-to-r from-rose-500/30 via-violet-500/30 to-rose-500/30 opacity-80'
+                            : 'bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 opacity-40'
+                            }`} />
+
+                        <div className="relative rounded-[26px] bg-card/80 dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-white/10 dark:border-white/5 overflow-hidden shadow-2xl">
+                            {/* Noise texture overlay */}
+                            <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.7\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
+
+                            {/* Top bar with enhanced styling */}
+                            <div className="relative flex items-center justify-between px-6 py-4 border-b border-white/5 dark:border-white/[0.03] bg-gradient-to-r from-white/[0.02] via-transparent to-white/[0.02]">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-3 h-3 rounded-full transition-all duration-300 ${isRecording ? 'bg-rose-500 animate-pulse shadow-lg shadow-rose-500/50' : 'bg-muted-foreground/30'}`} />
+                                    <div className={`relative w-3 h-3 rounded-full transition-all duration-300 ${isRecording ? 'bg-rose-500' : 'bg-muted-foreground/30'}`}>
+                                        {isRecording && (
+                                            <>
+                                                <div className="absolute inset-0 rounded-full bg-rose-500 animate-ping" />
+                                                <div className="absolute -inset-1.5 rounded-full bg-rose-500/20 animate-pulse" />
+                                            </>
+                                        )}
+                                    </div>
                                     <span className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                        <AudioWaveform className="w-4 h-4 text-primary" />
+                                        <Waves className={`w-4 h-4 transition-colors ${isRecording ? 'text-rose-400' : 'text-primary'}`} />
                                         Audio Waveform
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs text-muted-foreground font-mono bg-foreground/5 dark:bg-white/10 px-2 py-1 rounded">48kHz • Opus</span>
-                                    <div className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${isRecording
-                                        ? 'bg-rose-500/20 text-rose-500 dark:text-rose-400'
-                                        : 'bg-foreground/5 dark:bg-white/10 text-muted-foreground'
+                                    <span className="text-xs text-muted-foreground font-mono bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5">
+                                        48kHz • Opus
+                                    </span>
+                                    <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border transition-all ${isRecording
+                                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-lg shadow-rose-500/10'
+                                        : 'bg-white/5 dark:bg-white/[0.03] text-muted-foreground border-white/5'
                                         }`}>
-                                        {isRecording && <Sparkles className="w-3 h-3" />}
+                                        {isRecording && <Sparkles className="w-3 h-3 animate-pulse" />}
                                         {isRecording ? 'Recording' : 'Idle'}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Visualizer */}
-                            <div className="p-4 md:p-6">
+                            {/* Visualizer with enhanced padding */}
+                            <div className="p-5 md:p-8 relative">
                                 <VoiceVisualizer audioLevel={audioLevel} isRecording={isRecording} />
                             </div>
 
-                            {/* Audio level meter */}
-                            <div className="px-6 pb-5 flex items-center gap-4">
-                                <Volume2 className={`w-4 h-4 transition-colors ${isRecording ? 'text-primary' : 'text-muted-foreground/50'}`} />
-                                <div className="flex-1 h-2.5 bg-foreground/5 dark:bg-white/5 rounded-full overflow-hidden">
+                            {/* Enhanced audio level meter */}
+                            <div className="px-6 pb-6 flex items-center gap-4">
+                                <div className={`p-2 rounded-lg transition-all ${isRecording ? 'bg-primary/10' : 'bg-white/5'}`}>
+                                    <Volume2 className={`w-4 h-4 transition-colors ${isRecording ? 'text-primary' : 'text-muted-foreground/50'}`} />
+                                </div>
+                                <div className="flex-1 h-3 bg-white/5 dark:bg-white/[0.03] rounded-full overflow-hidden border border-white/5">
                                     <div
-                                        className="h-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 transition-all duration-100 rounded-full shadow-lg"
+                                        className="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 transition-all duration-75 rounded-full shadow-[0_0_20px_rgba(251,191,36,0.3)]"
                                         style={{ width: `${audioLevel * 100}%` }}
                                     />
                                 </div>
-                                <span className="text-xs font-mono text-muted-foreground w-12 text-right tabular-nums bg-foreground/5 dark:bg-white/10 px-2 py-0.5 rounded">
+                                <span className="text-xs font-mono text-muted-foreground w-14 text-right tabular-nums bg-white/5 dark:bg-white/[0.03] px-2.5 py-1 rounded-lg border border-white/5">
                                     {Math.round(audioLevel * 100)}%
                                 </span>
                             </div>
@@ -301,122 +352,145 @@ export default function StreamPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {/* Recording Control Card */}
-                        <div className="relative rounded-3xl bg-card dark:bg-secondary/30 backdrop-blur-xl border border-card-border dark:border-white/10 p-8 flex flex-col items-center justify-center overflow-hidden shadow-xl">
-                            {/* Animated background effect */}
-                            {isRecording && (
-                                <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-violet-500/5" />
-                            )}
+                        <div className="relative rounded-[26px] bg-card/80 dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-white/10 dark:border-white/5 p-8 flex flex-col items-center justify-center overflow-hidden shadow-2xl min-h-[320px]">
+                            {/* Noise texture */}
+                            <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.7\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
 
-                            {/* Pulsing rings when recording */}
+                            {/* Animated background gradient */}
+                            <div className={`absolute inset-0 transition-opacity duration-700 ${isRecording ? 'opacity-100' : 'opacity-0'}`}>
+                                <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-transparent to-fuchsia-500/10" />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/5 via-transparent to-amber-500/5 animate-pulse" style={{ animationDuration: '3s' }} />
+                            </div>
+
+                            {/* Orbital rings */}
                             {isRecording && (
                                 <>
-                                    <div className="absolute inset-0 rounded-3xl border-2 border-rose-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-                                    <div className="absolute inset-4 rounded-2xl border border-rose-500/10 animate-ping" style={{ animationDuration: '3s' }} />
+                                    <div className="absolute inset-8 rounded-full border border-rose-500/20" style={{ animation: 'spin 8s linear infinite' }} />
+                                    <div className="absolute inset-12 rounded-full border border-violet-500/15" style={{ animation: 'spin 12s linear infinite reverse' }} />
+                                    <div className="absolute inset-4 rounded-full border border-fuchsia-500/10" style={{ animation: 'spin 15s linear infinite' }} />
                                 </>
                             )}
 
                             {/* Duration Display */}
-                            <div className={`relative font-mono text-5xl md:text-6xl font-bold transition-all duration-500 tabular-nums mb-6 ${isRecording ? 'text-foreground' : 'text-muted-foreground/30'
+                            <div className={`relative font-mono text-5xl md:text-6xl font-bold transition-all duration-500 tabular-nums mb-8 ${isRecording
+                                ? 'text-foreground drop-shadow-[0_0_30px_rgba(244,63,94,0.3)]'
+                                : 'text-muted-foreground/25'
                                 }`}>
                                 {formatDuration(duration)}
                                 {isRecording && (
-                                    <div className="absolute -inset-4 bg-gradient-to-r from-rose-500/10 via-transparent to-rose-500/10 blur-2xl -z-10" />
+                                    <div className="absolute -inset-6 bg-gradient-to-r from-rose-500/15 via-transparent to-rose-500/15 blur-2xl -z-10 rounded-full" />
                                 )}
                             </div>
 
-                            {/* Record Button */}
+                            {/* Premium Record Button */}
                             <button
                                 onClick={isRecording ? stopRecording : startRecording}
                                 disabled={!isConnected}
-                                className={`relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500 ${!isConnected
-                                    ? 'opacity-50 grayscale cursor-not-allowed'
+                                className={`group relative w-32 h-32 rounded-full flex items-center justify-center transition-all duration-500 ${!isConnected
+                                    ? 'opacity-40 grayscale cursor-not-allowed'
                                     : 'hover:scale-105 active:scale-95 cursor-pointer'
                                     }`}
                             >
-                                {/* Button glow effect */}
-                                <div className={`absolute -inset-3 rounded-full transition-all duration-500 blur-xl ${isRecording
-                                    ? 'bg-rose-500/40'
-                                    : 'bg-primary/30'
+                                {/* Multi-layer glow */}
+                                <div className={`absolute -inset-4 rounded-full transition-all duration-700 blur-2xl ${isRecording
+                                    ? 'bg-rose-500/50'
+                                    : 'bg-primary/40 group-hover:bg-primary/50'
+                                    }`} />
+                                <div className={`absolute -inset-2 rounded-full transition-all duration-500 blur-lg ${isRecording
+                                    ? 'bg-rose-500/60'
+                                    : 'bg-accent/40'
                                     }`} />
 
-                                {/* Background gradient */}
+                                {/* Button background with premium gradient */}
                                 <div className={`absolute inset-0 rounded-full transition-all duration-500 ${isRecording
-                                    ? 'bg-gradient-to-tr from-rose-600 to-red-500 shadow-[0_0_60px_rgba(225,29,72,0.4)]'
-                                    : 'bg-gradient-to-tr from-primary to-accent shadow-[0_0_40px_rgba(139,92,246,0.3)]'
+                                    ? 'bg-gradient-to-br from-rose-500 via-rose-600 to-red-600 shadow-[0_0_80px_rgba(225,29,72,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
+                                    : 'bg-gradient-to-br from-primary via-violet-600 to-accent shadow-[0_0_60px_rgba(139,92,246,0.4),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                     }`} />
 
-                                {/* Inner content */}
+                                {/* Shimmer effect */}
+                                <div className="absolute inset-0 rounded-full overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                </div>
+
+                                {/* Icon */}
                                 <div className="relative z-10 text-white">
                                     {isRecording ? (
-                                        <div className="w-8 h-8 rounded-md bg-white shadow-lg" />
+                                        <div className="w-9 h-9 rounded-lg bg-white shadow-lg transition-transform duration-200 group-hover:scale-90" />
                                     ) : (
-                                        <Mic className="w-10 h-10" />
+                                        <Mic className="w-11 h-11 transition-transform duration-200 group-hover:scale-110" />
                                     )}
                                 </div>
                             </button>
 
                             {/* Status text */}
-                            <p className="relative mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                <ChevronRight className={`w-4 h-4 transition-transform ${isRecording ? 'rotate-90' : ''}`} />
-                                {isRecording ? 'Click to Stop' : 'Click to Start'}
+                            <p className={`relative mt-8 text-sm font-semibold uppercase tracking-[0.2em] flex items-center gap-2 transition-colors ${isRecording ? 'text-rose-400' : 'text-muted-foreground'
+                                }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${isRecording ? 'bg-rose-400 animate-pulse' : 'bg-muted-foreground/50'}`} />
+                                {isRecording ? 'Recording...' : 'Ready to Record'}
                             </p>
                         </div>
 
                         {/* Stats Panel */}
-                        <div className="rounded-3xl bg-card dark:bg-secondary/30 backdrop-blur-xl border border-card-border dark:border-white/10 p-6 shadow-xl">
-                            <div className="flex items-center gap-2 mb-6">
-                                <div className="p-2 rounded-lg bg-primary/10">
+                        <div className="relative rounded-[26px] bg-card/80 dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-white/10 dark:border-white/5 p-6 shadow-2xl overflow-hidden">
+                            {/* Noise texture */}
+                            <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.7\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
+
+                            <div className="relative flex items-center gap-3 mb-6">
+                                <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/10">
                                     <Activity className="w-5 h-5 text-primary" />
                                 </div>
-                                <h3 className="font-bold text-foreground">Stream Statistics</h3>
+                                <div>
+                                    <h3 className="font-bold text-foreground">Stream Statistics</h3>
+                                    <p className="text-[10px] text-muted-foreground">Real-time metrics</p>
+                                </div>
                             </div>
 
-                            <div className="space-y-3">
-                                {/* Stat items */}
-                                <div className="flex items-center justify-between p-3.5 rounded-xl bg-foreground/[0.02] dark:bg-white/5 border border-foreground/5 dark:border-white/5 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors">
+                            <div className="relative space-y-2.5">
+                                {/* Stat items with hover effects */}
+                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] dark:bg-white/[0.02] border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300 cursor-default">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-lg bg-blue-500/15 dark:bg-blue-500/20 flex items-center justify-center">
-                                            <Zap className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center border border-blue-500/10 group-hover:scale-110 transition-transform">
+                                            <Zap className="w-4 h-4 text-blue-400" />
                                         </div>
-                                        <span className="text-sm text-muted-foreground">Chunk Size</span>
+                                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Chunk Size</span>
                                     </div>
-                                    <span className="font-mono font-bold text-foreground bg-foreground/5 dark:bg-white/10 px-2.5 py-1 rounded-lg">
+                                    <span className="font-mono font-bold text-foreground bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5 text-sm">
                                         {audioProgress ? `${audioProgress.chunkBytes} B` : '—'}
                                     </span>
                                 </div>
 
-                                <div className="flex items-center justify-between p-3.5 rounded-xl bg-foreground/[0.02] dark:bg-white/5 border border-foreground/5 dark:border-white/5 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors">
+                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] dark:bg-white/[0.02] border border-white/5 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 cursor-default">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-lg bg-emerald-500/15 dark:bg-emerald-500/20 flex items-center justify-center">
-                                            <Server className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center border border-emerald-500/10 group-hover:scale-110 transition-transform">
+                                            <Server className="w-4 h-4 text-emerald-400" />
                                         </div>
-                                        <span className="text-sm text-muted-foreground">Total Data</span>
+                                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Total Data</span>
                                     </div>
-                                    <span className="font-mono font-bold text-foreground bg-foreground/5 dark:bg-white/10 px-2.5 py-1 rounded-lg">
+                                    <span className="font-mono font-bold text-foreground bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5 text-sm">
                                         {audioProgress ? `${(audioProgress.totalBytes / 1024).toFixed(1)} KB` : '—'}
                                     </span>
                                 </div>
 
-                                <div className="flex items-center justify-between p-3.5 rounded-xl bg-foreground/[0.02] dark:bg-white/5 border border-foreground/5 dark:border-white/5 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors">
+                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] dark:bg-white/[0.02] border border-white/5 hover:border-violet-500/30 hover:bg-violet-500/5 transition-all duration-300 cursor-default">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-lg bg-violet-500/15 dark:bg-violet-500/20 flex items-center justify-center">
-                                            <Signal className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center border border-violet-500/10 group-hover:scale-110 transition-transform">
+                                            <Signal className="w-4 h-4 text-violet-400" />
                                         </div>
-                                        <span className="text-sm text-muted-foreground">Packets Sent</span>
+                                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Packets Sent</span>
                                     </div>
-                                    <span className="font-mono font-bold text-foreground bg-foreground/5 dark:bg-white/10 px-2.5 py-1 rounded-lg">
+                                    <span className="font-mono font-bold text-foreground bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5 text-sm">
                                         {audioProgress ? audioProgress.totalChunks : '—'}
                                     </span>
                                 </div>
 
-                                <div className="flex items-center justify-between p-3.5 rounded-xl bg-foreground/[0.02] dark:bg-white/5 border border-foreground/5 dark:border-white/5 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors">
+                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] dark:bg-white/[0.02] border border-white/5 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all duration-300 cursor-default">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-lg bg-amber-500/15 dark:bg-amber-500/20 flex items-center justify-center">
-                                            <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center border border-amber-500/10 group-hover:scale-110 transition-transform">
+                                            <Clock className="w-4 h-4 text-amber-400" />
                                         </div>
-                                        <span className="text-sm text-muted-foreground">Duration</span>
+                                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Duration</span>
                                     </div>
-                                    <span className="font-mono font-bold text-foreground bg-foreground/5 dark:bg-white/10 px-2.5 py-1 rounded-lg">
+                                    <span className="font-mono font-bold text-foreground bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5 text-sm">
                                         {formatDuration(duration)}
                                     </span>
                                 </div>
@@ -427,61 +501,77 @@ export default function StreamPage() {
 
                 {/* Right Column: Transcript Panel */}
                 <div className="w-full lg:w-[420px] shrink-0 lg:sticky lg:top-28 lg:h-[calc(100vh-160px)]">
-                    <div className="h-full rounded-3xl bg-card dark:bg-secondary/30 backdrop-blur-2xl border border-card-border dark:border-white/10 overflow-hidden flex flex-col shadow-2xl">
+                    <div className="relative h-full rounded-[26px] bg-card/80 dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-white/10 dark:border-white/5 overflow-hidden flex flex-col shadow-2xl">
+                        {/* Noise texture */}
+                        <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.7\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
+
+                        {/* Subtle gradient overlay */}
+                        <div className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${isRecording ? 'opacity-100' : 'opacity-0'}`}>
+                            <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent" />
+                        </div>
+
                         {/* Header */}
-                        <div className="px-6 py-5 border-b border-foreground/5 dark:border-white/10 bg-foreground/[0.02] dark:bg-white/5">
+                        <div className="relative px-6 py-5 border-b border-white/5 dark:border-white/[0.03] bg-gradient-to-r from-white/[0.02] via-transparent to-white/[0.02]">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <div className={`w-3 h-3 rounded-full transition-all ${isRecording ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
-                                        {isRecording && <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping" />}
+                                        {isRecording && (
+                                            <>
+                                                <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping" />
+                                                <div className="absolute -inset-1 rounded-full bg-emerald-500/20 animate-pulse" />
+                                            </>
+                                        )}
                                     </div>
                                     <h3 className="font-bold text-foreground">Live Transcript</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${isRecording
-                                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                                        : 'bg-foreground/5 dark:bg-white/10 text-muted-foreground'
+                                    <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${isRecording
+                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-lg shadow-emerald-500/10'
+                                        : 'bg-white/5 dark:bg-white/[0.03] text-muted-foreground border-white/5'
                                         }`}>
                                         {isRecording ? 'Active' : 'Waiting'}
                                     </span>
                                 </div>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-2">
+                            <p className="text-xs text-muted-foreground mt-2.5 flex items-center gap-1.5">
+                                <Sparkles className="w-3 h-3" />
                                 Real-time speech-to-text transcription
                             </p>
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-6">
+                        <div className="relative flex-1 overflow-y-auto p-6">
                             {transcript ? (
                                 <div className="space-y-4">
                                     <div className="flex gap-3 animate-fade-in-up">
-                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
+                                        <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-violet-600 to-accent flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
                                             <Mic className="w-4 h-4 text-white" />
+                                            <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-br from-primary to-accent opacity-50 blur-sm -z-10" />
                                         </div>
                                         <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-xs font-semibold text-foreground">You</span>
-                                                <span className="text-[10px] text-muted-foreground">just now</span>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xs font-bold text-foreground">You</span>
+                                                <span className="text-[10px] text-muted-foreground bg-white/5 px-2 py-0.5 rounded">just now</span>
                                             </div>
-                                            <div className="p-4 rounded-2xl rounded-tl-sm bg-foreground/[0.02] dark:bg-white/5 border border-foreground/5 dark:border-white/5 text-sm leading-relaxed text-foreground/90">
+                                            <div className="p-4 rounded-2xl rounded-tl-md bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5 text-sm leading-relaxed text-foreground/90 shadow-lg">
                                                 {transcript}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
+                                <div className="h-full flex flex-col items-center justify-center text-center space-y-5">
                                     <div className="relative">
-                                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-                                            <Activity className="w-8 h-8 text-muted-foreground/40" />
+                                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-violet-500/10 flex items-center justify-center border border-white/5">
+                                            <Activity className="w-10 h-10 text-muted-foreground/30" />
                                         </div>
-                                        <div className="absolute inset-0 rounded-full border-2 border-dashed border-muted-foreground/10 animate-spin" style={{ animationDuration: '10s' }} />
+                                        <div className="absolute inset-0 rounded-2xl border-2 border-dashed border-muted-foreground/10" style={{ animation: 'spin 15s linear infinite' }} />
+                                        <div className="absolute -inset-3 rounded-3xl border border-dashed border-muted-foreground/5" style={{ animation: 'spin 25s linear infinite reverse' }} />
                                     </div>
-                                    <div>
+                                    <div className="space-y-2">
                                         <p className="text-sm font-medium text-muted-foreground">Waiting for speech...</p>
-                                        <p className="text-xs text-muted-foreground/50 mt-1 max-w-[200px]">
+                                        <p className="text-xs text-muted-foreground/50 max-w-[220px] leading-relaxed">
                                             Start recording and speak to generate live transcripts
                                         </p>
                                     </div>
@@ -490,17 +580,19 @@ export default function StreamPage() {
                         </div>
 
                         {/* Footer */}
-                        <div className="px-6 py-4 bg-foreground/[0.02] dark:bg-white/5 border-t border-foreground/5 dark:border-white/10">
+                        <div className="relative px-6 py-4 bg-gradient-to-r from-white/[0.02] via-transparent to-white/[0.02] border-t border-white/5 dark:border-white/[0.03]">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-1.5 h-1.5 rounded-full transition-all ${isRecording ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/30'}`} />
+                                <div className="flex items-center gap-2.5">
+                                    <div className={`w-2 h-2 rounded-full transition-all ${isRecording ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-muted-foreground/30'}`}>
+                                        {isRecording && <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping" />}
+                                    </div>
                                     <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">
                                         {isRecording ? 'Processing audio...' : 'Microphone idle'}
                                     </span>
                                 </div>
-                                <span className="text-[10px] text-muted-foreground/50 font-mono flex items-center gap-1">
+                                <span className="text-[10px] text-muted-foreground/50 font-mono flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg border border-white/5">
                                     <Sparkles className="w-3 h-3" />
-                                    Powered by AI
+                                    AI Powered
                                 </span>
                             </div>
                         </div>
