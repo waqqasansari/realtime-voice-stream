@@ -25,14 +25,26 @@ type TranscriptUpdate = {
 };
 
 /**
- * Type for incremental chunk transcription (new format).
+ * Type for incremental chunk transcription (optimized format).
  */
 type ChunkTranscript = {
     type: "chunk_transcript";
     chunkIndex: number;
-    chunkText: string;  // Just the new chunk
+    chunkText: string;  // Just the new deduplicated chunk
     fullText: string;   // Full accumulated transcript
+    confidence: number; // Estimated confidence (0-1)
+    hasSpeech: boolean; // Whether speech was detected
     isFinal?: boolean;
+};
+
+/**
+ * Metadata about the current transcription state.
+ */
+export type TranscriptMeta = {
+    confidence: number;
+    hasSpeech: boolean;
+    isFinal: boolean;
+    lastChunkText: string;
 };
 
 /**
@@ -44,6 +56,7 @@ export default function useVoiceStream() {
     const [isConnected, setIsConnected] = useState(false);
     const [audioProgress, setAudioProgress] = useState<AudioProgress | null>(null);
     const [transcript, setTranscript] = useState("");
+    const [transcriptMeta, setTranscriptMeta] = useState<TranscriptMeta | null>(null);
     const lastTranscriptRef = useRef("");
 
     // Refs to persist values across renders without triggering re-renders
@@ -97,12 +110,19 @@ export default function useVoiceStream() {
                     if (payload.type === "audio_progress") {
                         setAudioProgress(payload);
                     } else if (payload.type === "chunk_transcript") {
-                        // New incremental format: backend sends chunk text + full accumulated text
+                        // Optimized format: backend sends deduplicated chunk + full accumulated text
                         const incoming = payload.fullText.trim();
                         if (incoming) {
                             setTranscript(incoming);
                             lastTranscriptRef.current = incoming;
                         }
+                        // Update metadata for UI indicators
+                        setTranscriptMeta({
+                            confidence: payload.confidence ?? 0,
+                            hasSpeech: payload.hasSpeech ?? false,
+                            isFinal: payload.isFinal ?? false,
+                            lastChunkText: payload.chunkText ?? "",
+                        });
                     } else if (payload.type === "transcript_update" || payload.type === "chunk_caption") {
                         // Legacy format support
                         const incoming = payload.text.trim();
@@ -188,6 +208,7 @@ export default function useVoiceStream() {
     const clearAudioProgress = () => {
         setAudioProgress(null);
         setTranscript("");
+        setTranscriptMeta(null);
         lastTranscriptRef.current = "";
     };
 
@@ -195,6 +216,7 @@ export default function useVoiceStream() {
         isConnected,
         audioProgress,
         transcript,
+        transcriptMeta,
         sendAudioData,
         sendMetadata,
         sendControl,

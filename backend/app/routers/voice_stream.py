@@ -7,7 +7,12 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.services.voice_stream import decode_audio_bytes, transcriber
+from app.services.voice_stream import (
+    SAMPLE_RATE,
+    StreamingTranscriptionState,
+    decode_audio_bytes,
+    transcriber,
+)
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
@@ -16,13 +21,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ws", tags=["voice-stream"])
 
 # Transcribe every N chunks. At 100ms per chunk from frontend:
-# - 30 chunks = ~3 seconds of audio per transcription batch
-# - Larger chunks give Whisper more complete speech segments, reducing hallucinations
-TRANSCRIBE_EVERY_CHUNKS = 30
+# - 20 chunks = ~2 seconds of audio per transcription batch
+# - Balanced between latency and transcription quality
+TRANSCRIBE_EVERY_CHUNKS = 20
 
-# Overlap in samples to include from previous chunk for context (avoids mid-word cuts)
-# At 16kHz sample rate: 0.5 seconds * 16000 = 8000 samples
-OVERLAP_SAMPLES = 8000
+# Overlap in seconds to include from previous chunk for context (avoids mid-word cuts)
+OVERLAP_SECONDS = 0.5
+OVERLAP_SAMPLES = int(OVERLAP_SECONDS * SAMPLE_RATE)
 
 
 def persist_recording(buffer: bytearray, meta: dict[str, str]) -> None:
@@ -66,6 +71,61 @@ def persist_recording(buffer: bytearray, meta: dict[str, str]) -> None:
     logger.info("Saved voice stream to %s", audio_path)
 
 
+async def process_transcription(
+    audio_buffer: bytearray,
+    transcription_state: StreamingTranscriptionState,
+    websocket: WebSocket,
+    chunk_count: int,
+    is_final: bool = False,
+) -> None:
+    """
+    Process audio buffer and send transcription results.
+    
+    Args:
+        audio_buffer: Complete audio buffer (WebM container)
+        transcription_state: State object for incremental transcription
+        websocket: WebSocket connection to send results
+        chunk_count: Current chunk count for logging
+        is_final: Whether this is the final transcription
+    """
+    # Decode the full audio buffer (WebM container requires full decode)
+    decoded_audio = await asyncio.to_thread(
+        decode_audio_bytes, bytes(audio_buffer)
+    )
+    
+    if decoded_audio.size <= transcription_state.processed_samples:
+        return
+    
+    # Calculate chunk boundaries with overlap
+    start_idx = max(0, transcription_state.processed_samples - OVERLAP_SAMPLES)
+    new_audio = decoded_audio[start_idx:]
+    
+    # Update processed samples count
+    transcription_state.processed_samples = decoded_audio.size
+    
+    # Use the streaming transcription method with deduplication
+    result = await asyncio.to_thread(
+        transcriber.transcribe_streaming_chunk,
+        new_audio,
+        transcription_state,
+        OVERLAP_SAMPLES,
+    )
+    
+    if result.chunk_text or is_final:
+        try:
+            await websocket.send_json({
+                "type": "chunk_transcript",
+                "chunkIndex": chunk_count,
+                "chunkText": result.chunk_text,
+                "fullText": result.full_text,
+                "confidence": result.confidence,
+                "hasSpeech": result.has_speech,
+                "isFinal": is_final,
+            })
+        except RuntimeError as exc:
+            logger.warning("Failed to send transcript: %s", exc)
+
+
 @router.websocket("/voice")
 async def handle_voice_stream(websocket: WebSocket) -> None:
     """
@@ -74,7 +134,7 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
     Workflow:
     1. Accepts the WebSocket connection.
     2. Enters a loop to receive messages:
-       - Binary bytes: Appends to audio buffer, generates dummy captions, and sends progress updates.
+       - Binary bytes: Appends to audio buffer and triggers transcription periodically.
        - JSON text: Handles control messages like 'stream_start', 'stream_end', or 'metadata'.
     3. On disconnect or 'stream_end', it saves the audio data via persist_recording.
     """
@@ -84,14 +144,13 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
     audio_buffer = bytearray()
     chunk_count = 0
     metadata: dict[str, str] = {}
-    last_transcript = ""
-    last_sample_count = 0  # Track how many samples have been processed
+    transcription_state = StreamingTranscriptionState()
 
     try:
         while True:
             # Receive the next message from the client
             message = await websocket.receive()
-            
+
             # Check for disconnect message
             if message.get("type") == "websocket.disconnect":
                 logger.info("Received disconnect message; ending stream")
@@ -105,56 +164,24 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
 
                 try:
                     # Provide feedback to the client about the stream progress
-                    await websocket.send_json(
-                        {
-                            "type": "audio_progress",
-                            "chunkBytes": len(chunk),
-                            "totalBytes": len(audio_buffer),
-                            "totalChunks": chunk_count,
-                        }
-                    )
+                    await websocket.send_json({
+                        "type": "audio_progress",
+                        "chunkBytes": len(chunk),
+                        "totalBytes": len(audio_buffer),
+                        "totalChunks": chunk_count,
+                    })
                 except RuntimeError as exc:
                     logger.warning("Failed to send progress update: %s", exc)
 
+                # Trigger transcription every N chunks
                 if chunk_count % TRANSCRIBE_EVERY_CHUNKS == 0:
-                    # Decode full audio buffer (needed because WebM is container format)
-                    audio_snapshot = bytes(audio_buffer)
-                    decoded_audio = await asyncio.to_thread(
-                        decode_audio_bytes, audio_snapshot
+                    await process_transcription(
+                        audio_buffer,
+                        transcription_state,
+                        websocket,
+                        chunk_count,
+                        is_final=False,
                     )
-                    
-                    if decoded_audio.size > last_sample_count:
-                        # Calculate where to start: include OVERLAP_SAMPLES for context
-                        # This prevents cutting words in the middle
-                        start_idx = max(0, last_sample_count - OVERLAP_SAMPLES)
-                        new_audio = decoded_audio[start_idx:]
-                        
-                        # Update the sample count for next iteration
-                        last_sample_count = decoded_audio.size
-                        
-                        # Transcribe only the new audio chunk (with overlap context)
-                        result = await asyncio.to_thread(
-                            transcriber.transcribe_audio, new_audio
-                        )
-                        
-                        if result.text:
-                            chunk_text = result.text.strip()
-                            # Send incremental update - frontend will append
-                            if chunk_text:
-                                # Append to running transcript
-                                if last_transcript:
-                                    last_transcript = f"{last_transcript} {chunk_text}"
-                                else:
-                                    last_transcript = chunk_text
-                                    
-                                await websocket.send_json(
-                                    {
-                                        "type": "chunk_transcript",
-                                        "chunkIndex": chunk_count,
-                                        "chunkText": chunk_text,  # Just the new chunk
-                                        "fullText": last_transcript,  # Full accumulated
-                                    }
-                                )
 
                 continue
 
@@ -174,17 +201,14 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                     chunk_count = 0
                     metadata.clear()
                     metadata.update(payload.get("metadata", {}))
-                    last_transcript = ""
-                    last_sample_count = 0
+                    transcription_state.reset()
 
-                    await websocket.send_json(
-                        {
-                            "type": "audio_progress",
-                            "chunkBytes": 0,
-                            "totalBytes": 0,
-                            "totalChunks": 0,
-                        }
-                    )
+                    await websocket.send_json({
+                        "type": "audio_progress",
+                        "chunkBytes": 0,
+                        "totalBytes": 0,
+                        "totalChunks": 0,
+                    })
                     logger.info("Voice stream started with metadata: %s", metadata)
                     continue
 
@@ -195,51 +219,28 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
                     )
                     persist_recording(audio_buffer, metadata)
 
+                    # Process any remaining audio
                     if audio_buffer:
-                        # Transcribe any remaining unprocessed audio
-                        decoded_audio = await asyncio.to_thread(
-                            decode_audio_bytes, bytes(audio_buffer)
+                        await process_transcription(
+                            audio_buffer,
+                            transcription_state,
+                            websocket,
+                            chunk_count,
+                            is_final=True,
                         )
-                        if decoded_audio.size > last_sample_count:
-                            # Include overlap for context
-                            start_idx = max(0, last_sample_count - OVERLAP_SAMPLES)
-                            remaining_audio = decoded_audio[start_idx:]
-                            
-                            result = await asyncio.to_thread(
-                                transcriber.transcribe_audio, remaining_audio
-                            )
-                            if result.text:
-                                final_chunk = result.text.strip()
-                                if final_chunk:
-                                    if last_transcript:
-                                        last_transcript = f"{last_transcript} {final_chunk}"
-                                    else:
-                                        last_transcript = final_chunk
-                                    await websocket.send_json(
-                                        {
-                                            "type": "chunk_transcript",
-                                            "chunkIndex": chunk_count,
-                                            "chunkText": final_chunk,
-                                            "fullText": last_transcript,
-                                            "isFinal": True,
-                                        }
-                                    )
 
                     # Clear session state after saving
                     audio_buffer.clear()
                     chunk_count = 0
                     metadata.clear()
-                    last_transcript = ""
-                    last_sample_count = 0
+                    transcription_state.reset()
 
-                    await websocket.send_json(
-                        {
-                            "type": "audio_progress",
-                            "chunkBytes": 0,
-                            "totalBytes": 0,
-                            "totalChunks": 0,
-                        }
-                    )
+                    await websocket.send_json({
+                        "type": "audio_progress",
+                        "chunkBytes": 0,
+                        "totalBytes": 0,
+                        "totalChunks": 0,
+                    })
                     continue
 
                 # Handle standalone metadata updates
@@ -269,4 +270,5 @@ async def handle_voice_stream(websocket: WebSocket) -> None:
     finally:
         # Ensure any remaining data is saved even if an error occurs
         persist_recording(audio_buffer, metadata)
+
 

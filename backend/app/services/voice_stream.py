@@ -1,7 +1,9 @@
 import logging
 import subprocess
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from difflib import SequenceMatcher
+from typing import List
 
 import numpy as np
 import torch
@@ -9,17 +11,48 @@ from transformers import WhisperForConditionalGeneration, WhisperProcessor
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "openai/whisper-base" # openai/whisper-base,openai/whisper-tiny 
+MODEL_NAME = "openai/whisper-base"  # openai/whisper-base,openai/whisper-tiny
 SAMPLE_RATE = 16000
+
+# Audio processing thresholds
+SILENCE_THRESHOLD = 0.01  # RMS threshold for silence detection
+MIN_SPEECH_SAMPLES = int(0.3 * SAMPLE_RATE)  # Minimum 300ms of speech to transcribe
+OVERLAP_CONTEXT_SECONDS = 0.5  # Context overlap for word boundary handling
 
 
 @dataclass
 class TranscriptionResult:
     text: str
     duration_seconds: float
+    is_partial: bool = False
+
+
+@dataclass
+class StreamingChunkResult:
+    """Result from incremental transcription with deduplication info"""
+    chunk_text: str  # The new unique text from this chunk
+    full_text: str  # Complete accumulated transcript
+    confidence: float  # Estimated confidence (0-1)
+    has_speech: bool  # Whether speech was detected in this chunk
+
+
+@dataclass
+class StreamingTranscriptionState:
+    """Maintains state for streaming transcription with deduplication"""
+    accumulated_text: str = ""
+    last_overlap_text: str = ""  # Last few words for deduplication
+    processed_samples: int = 0
+    chunk_history: List[str] = field(default_factory=list)
+    
+    def reset(self) -> None:
+        self.accumulated_text = ""
+        self.last_overlap_text = ""
+        self.processed_samples = 0
+        self.chunk_history.clear()
 
 
 def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
+    """Decode audio bytes (from container format) to raw PCM float32 samples."""
     if not audio_bytes:
         return np.array([], dtype=np.float32)
 
@@ -59,7 +92,91 @@ def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
     return audio_int16.astype(np.float32) / 32768.0
 
 
+def detect_speech_activity(audio: np.ndarray, threshold: float = SILENCE_THRESHOLD) -> bool:
+    """
+    Simple Voice Activity Detection using RMS energy.
+    Returns True if speech is likely present.
+    """
+    if audio.size < MIN_SPEECH_SAMPLES:
+        return False
+    
+    # Calculate RMS energy
+    rms = np.sqrt(np.mean(audio ** 2))
+    return rms > threshold
+
+
+def find_speech_boundaries(audio: np.ndarray, threshold: float = SILENCE_THRESHOLD) -> tuple[int, int]:
+    """
+    Find the start and end indices of speech in the audio.
+    Uses a sliding window to detect energy changes.
+    """
+    if audio.size == 0:
+        return 0, 0
+    
+    window_size = int(0.02 * SAMPLE_RATE)  # 20ms windows
+    
+    # Find start of speech
+    start_idx = 0
+    for i in range(0, len(audio) - window_size, window_size):
+        window = audio[i:i + window_size]
+        rms = np.sqrt(np.mean(window ** 2))
+        if rms > threshold:
+            start_idx = max(0, i - window_size)  # Include a bit before
+            break
+    
+    # Find end of speech (scan backwards)
+    end_idx = len(audio)
+    for i in range(len(audio) - window_size, start_idx, -window_size):
+        window = audio[i:i + window_size]
+        rms = np.sqrt(np.mean(window ** 2))
+        if rms > threshold:
+            end_idx = min(len(audio), i + 2 * window_size)  # Include a bit after
+            break
+    
+    return start_idx, end_idx
+
+
+def deduplicate_transcript(new_text: str, previous_text: str, overlap_words: int = 5) -> str:
+    """
+    Remove duplicate words/phrases that appear due to overlap context.
+    Uses suffix-prefix matching to find and remove duplicates.
+    """
+    if not previous_text or not new_text:
+        return new_text.strip()
+    
+    new_words = new_text.strip().split()
+    prev_words = previous_text.strip().split()
+    
+    if not new_words or not prev_words:
+        return new_text.strip()
+    
+    # Get the last N words from previous text for comparison
+    overlap_prev = prev_words[-overlap_words:] if len(prev_words) >= overlap_words else prev_words
+    
+    # Find best matching overlap at the start of new text
+    best_match_len = 0
+    
+    for match_len in range(1, min(len(overlap_prev), len(new_words)) + 1):
+        # Check if the last 'match_len' words of prev match first 'match_len' of new
+        prev_suffix = " ".join(overlap_prev[-match_len:]).lower()
+        new_prefix = " ".join(new_words[:match_len]).lower()
+        
+        # Use fuzzy matching for robustness against minor transcription differences
+        similarity = SequenceMatcher(None, prev_suffix, new_prefix).ratio()
+        if similarity > 0.85:  # 85% similarity threshold
+            best_match_len = match_len
+    
+    # Remove the overlapping prefix from new text
+    if best_match_len > 0:
+        deduplicated = " ".join(new_words[best_match_len:])
+        return deduplicated.strip()
+    
+    return new_text.strip()
+
+
 class WhisperTranscriber:
+    """Thread-safe Whisper transcriber with streaming support."""
+    
     def __init__(self) -> None:
         self._processor: WhisperProcessor | None = None
         self._model: WhisperForConditionalGeneration | None = None
@@ -80,6 +197,7 @@ class WhisperTranscriber:
             logger.info("Whisper model loaded on %s", self._device)
 
     def transcribe(self, audio_bytes: bytes) -> TranscriptionResult:
+        """Transcribe raw audio bytes (in container format like WebM)."""
         self._ensure_loaded()
         if self._processor is None or self._model is None or self._device is None:
             return TranscriptionResult(text="", duration_seconds=0.0)
@@ -87,12 +205,29 @@ class WhisperTranscriber:
         audio = decode_audio_bytes(audio_bytes)
         return self.transcribe_audio(audio)
 
-    def transcribe_audio(self, audio: np.ndarray) -> TranscriptionResult:
+    def transcribe_audio(self, audio: np.ndarray, detect_boundaries: bool = False) -> TranscriptionResult:
+        """
+        Transcribe PCM audio samples.
+        
+        Args:
+            audio: Float32 audio samples at SAMPLE_RATE
+            detect_boundaries: If True, trim silence from audio boundaries
+        """
         self._ensure_loaded()
         if self._processor is None or self._model is None or self._device is None:
             return TranscriptionResult(text="", duration_seconds=0.0)
 
         if audio.size == 0:
+            return TranscriptionResult(text="", duration_seconds=0.0)
+
+        # Optionally trim silence
+        if detect_boundaries:
+            start_idx, end_idx = find_speech_boundaries(audio)
+            if end_idx > start_idx:
+                audio = audio[start_idx:end_idx]
+
+        # Skip if too short
+        if audio.size < MIN_SPEECH_SAMPLES:
             return TranscriptionResult(text="", duration_seconds=0.0)
 
         input_features = self._processor(
@@ -109,5 +244,78 @@ class WhisperTranscriber:
         duration_seconds = audio.size / SAMPLE_RATE
         return TranscriptionResult(text=transcription.strip(), duration_seconds=duration_seconds)
 
+    def transcribe_streaming_chunk(
+        self,
+        audio: np.ndarray,
+        state: StreamingTranscriptionState,
+        overlap_samples: int = int(OVERLAP_CONTEXT_SECONDS * SAMPLE_RATE),
+    ) -> StreamingChunkResult:
+        """
+        Transcribe an audio chunk with state tracking and deduplication.
+        
+        This method is optimized for streaming:
+        - Includes overlap context for word boundary handling
+        - Deduplicates text that appears due to overlap
+        - Tracks accumulated transcript
+        
+        Args:
+            audio: The audio chunk to transcribe (should include overlap from previous)
+            state: Streaming state object (modified in-place)
+            overlap_samples: Number of samples of overlap context included
+            
+        Returns:
+            StreamingChunkResult with deduplicated chunk and full transcript
+        """
+        self._ensure_loaded()
+        
+        # Check for speech activity
+        has_speech = detect_speech_activity(audio)
+        if not has_speech:
+            return StreamingChunkResult(
+                chunk_text="",
+                full_text=state.accumulated_text,
+                confidence=0.0,
+                has_speech=False,
+            )
 
+        # Transcribe the chunk
+        result = self.transcribe_audio(audio, detect_boundaries=True)
+        
+        if not result.text:
+            return StreamingChunkResult(
+                chunk_text="",
+                full_text=state.accumulated_text,
+                confidence=0.0,
+                has_speech=has_speech,
+            )
+
+        # Deduplicate against previous overlap
+        chunk_text = deduplicate_transcript(result.text, state.last_overlap_text)
+        
+        # Update state
+        if chunk_text:
+            if state.accumulated_text:
+                state.accumulated_text = f"{state.accumulated_text} {chunk_text}"
+            else:
+                state.accumulated_text = chunk_text
+            
+            state.chunk_history.append(chunk_text)
+            
+            # Keep last portion for next deduplication
+            words = result.text.split()
+            state.last_overlap_text = " ".join(words[-8:]) if len(words) > 8 else result.text
+
+        # Estimate confidence based on speech activity strength
+        rms = np.sqrt(np.mean(audio ** 2))
+        confidence = min(1.0, rms / (SILENCE_THRESHOLD * 10))
+
+        return StreamingChunkResult(
+            chunk_text=chunk_text,
+            full_text=state.accumulated_text,
+            confidence=confidence,
+            has_speech=True,
+        )
+
+
+# Global transcriber instance
 transcriber = WhisperTranscriber()
