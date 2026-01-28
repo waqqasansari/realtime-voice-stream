@@ -88,12 +88,19 @@ async def process_transcription(
         chunk_count: Current chunk count for logging
         is_final: Whether this is the final transcription
     """
+    # Skip processing if buffer is too small (WebM needs enough container data)
+    # At least 10KB ensures we have valid WebM headers and some audio data
+    MIN_BUFFER_SIZE = 10 * 1024  # 10KB minimum
+    if len(audio_buffer) < MIN_BUFFER_SIZE and not is_final:
+        return
+    
     # Decode the full audio buffer (WebM container requires full decode)
     decoded_audio = await asyncio.to_thread(
         decode_audio_bytes, bytes(audio_buffer)
     )
     
-    if decoded_audio.size <= transcription_state.processed_samples:
+    # Skip if no audio decoded or nothing new
+    if decoded_audio.size == 0 or decoded_audio.size <= transcription_state.processed_samples:
         return
     
     # Calculate chunk boundaries with overlap
@@ -118,8 +125,8 @@ async def process_transcription(
                 "chunkIndex": chunk_count,
                 "chunkText": result.chunk_text,
                 "fullText": result.full_text,
-                "confidence": result.confidence,
-                "hasSpeech": result.has_speech,
+                "confidence": float(result.confidence),  # Convert numpy float32 to Python float
+                "hasSpeech": bool(result.has_speech),
                 "isFinal": is_final,
             })
         except RuntimeError as exc:

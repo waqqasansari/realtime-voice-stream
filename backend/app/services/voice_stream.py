@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import threading
+import warnings
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from typing import List
@@ -8,6 +9,10 @@ from typing import List
 import numpy as np
 import torch
 from transformers import WhisperForConditionalGeneration, WhisperProcessor
+
+# Suppress transformers warnings about deprecated features
+warnings.filterwarnings("ignore", message=".*forced_decoder_ids.*")
+warnings.filterwarnings("ignore", message=".*multilingual Whisper.*")
 
 logger = logging.getLogger(__name__)
 
@@ -191,10 +196,34 @@ class WhisperTranscriber:
             logger.info("Loading Whisper model: %s", MODEL_NAME)
             self._processor = WhisperProcessor.from_pretrained(MODEL_NAME)
             self._model = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
-            self._model.config.forced_decoder_ids = None
+            
+            # Set language to English to avoid multilingual detection warnings
+            self._model.config.forced_decoder_ids = self._processor.get_decoder_prompt_ids(
+                language="en", task="transcribe"
+            )
+            
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
             self._model = self._model.to(self._device)
             logger.info("Whisper model loaded on %s", self._device)
+
+    def warmup(self) -> None:
+        """Pre-load the model to avoid cold start delays on first transcription."""
+        logger.info("Warming up Whisper model...")
+        self._ensure_loaded()
+        
+        # Run a dummy inference to fully initialize CUDA kernels
+        if self._processor is not None and self._model is not None and self._device is not None:
+            dummy_audio = np.zeros(SAMPLE_RATE, dtype=np.float32)  # 1 second of silence
+            input_features = self._processor(
+                dummy_audio,
+                sampling_rate=SAMPLE_RATE,
+                return_tensors="pt",
+            ).input_features.to(self._device)
+            
+            with torch.no_grad():
+                _ = self._model.generate(input_features, max_new_tokens=1)
+        
+        logger.info("Whisper model warmup complete")
 
     def transcribe(self, audio_bytes: bytes) -> TranscriptionResult:
         """Transcribe raw audio bytes (in container format like WebM)."""
