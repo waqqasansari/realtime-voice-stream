@@ -291,12 +291,12 @@ export default function StreamPage() {
                             : 'bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 opacity-40'
                             }`} />
 
-                        <div className="relative rounded-[26px] bg-card/80 dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-white/10 dark:border-white/5 overflow-hidden shadow-2xl">
+                        <div className="relative rounded-[26px] bg-white dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-2xl">
                             {/* Noise texture overlay */}
                             <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.7\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
 
                             {/* Top bar with enhanced styling */}
-                            <div className="relative flex items-center justify-between px-6 py-4 border-b border-white/5 dark:border-white/[0.03] bg-gradient-to-r from-white/[0.02] via-transparent to-white/[0.02]">
+                            <div className="relative flex items-center justify-between px-6 py-4 border-b border-slate-200/80 dark:border-white/[0.03] bg-gradient-to-r from-slate-100/50 dark:from-white/[0.02] via-transparent to-slate-100/50 dark:to-white/[0.02]">
                                 <div className="flex items-center gap-3">
                                     <div className={`relative w-3 h-3 rounded-full transition-all duration-300 ${isRecording ? 'bg-rose-500' : 'bg-muted-foreground/30'}`}>
                                         {isRecording && (
@@ -312,12 +312,12 @@ export default function StreamPage() {
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs text-muted-foreground font-mono bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5">
+                                    <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5">
                                         48kHz • Opus
                                     </span>
                                     <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border transition-all ${isRecording
                                         ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-lg shadow-rose-500/10'
-                                        : 'bg-white/5 dark:bg-white/[0.03] text-muted-foreground border-white/5'
+                                        : 'bg-slate-100 dark:bg-white/[0.03] text-muted-foreground border-slate-200 dark:border-white/5'
                                         }`}>
                                         {isRecording && <Sparkles className="w-3 h-3 animate-pulse" />}
                                         {isRecording ? 'Recording' : 'Idle'}
@@ -332,16 +332,16 @@ export default function StreamPage() {
 
                             {/* Enhanced audio level meter */}
                             <div className="px-6 pb-6 flex items-center gap-4">
-                                <div className={`p-2 rounded-lg transition-all ${isRecording ? 'bg-primary/10' : 'bg-white/5'}`}>
+                                <div className={`p-2 rounded-lg transition-all ${isRecording ? 'bg-primary/10' : 'bg-slate-100 dark:bg-white/5'}`}>
                                     <Volume2 className={`w-4 h-4 transition-colors ${isRecording ? 'text-primary' : 'text-muted-foreground/50'}`} />
                                 </div>
-                                <div className="flex-1 h-3 bg-white/5 dark:bg-white/[0.03] rounded-full overflow-hidden border border-white/5">
+                                <div className="flex-1 h-3 bg-slate-100 dark:bg-white/[0.03] rounded-full overflow-hidden border border-slate-200 dark:border-white/5">
                                     <div
                                         className="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 transition-all duration-75 rounded-full shadow-[0_0_20px_rgba(251,191,36,0.3)]"
                                         style={{ width: `${audioLevel * 100}%` }}
                                     />
                                 </div>
-                                <span className="text-xs font-mono text-muted-foreground w-14 text-right tabular-nums bg-white/5 dark:bg-white/[0.03] px-2.5 py-1 rounded-lg border border-white/5">
+                                <span className="text-xs font-mono text-muted-foreground w-14 text-right tabular-nums bg-slate-100 dark:bg-white/[0.03] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/5">
                                     {Math.round(audioLevel * 100)}%
                                 </span>
                             </div>
@@ -352,7 +352,7 @@ export default function StreamPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {/* Recording Control Card */}
-                        <div className="relative rounded-[26px] bg-card/80 dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-white/10 dark:border-white/5 p-8 flex flex-col items-center justify-center overflow-hidden shadow-2xl min-h-[320px]">
+                        <div className="relative rounded-[26px] bg-white dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/5 p-8 flex flex-col items-center justify-center overflow-hidden shadow-2xl min-h-[320px]">
                             {/* Noise texture */}
                             <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.7\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
 
@@ -374,7 +374,7 @@ export default function StreamPage() {
                             {/* Duration Display */}
                             <div className={`relative font-mono text-5xl md:text-6xl font-bold transition-all duration-500 tabular-nums mb-8 ${isRecording
                                 ? 'text-foreground drop-shadow-[0_0_30px_rgba(244,63,94,0.3)]'
-                                : 'text-muted-foreground/25'
+                                : 'text-slate-300 dark:text-muted-foreground/25'
                                 }`}>
                                 {formatDuration(duration)}
                                 {isRecording && (
@@ -431,7 +431,7 @@ export default function StreamPage() {
                         </div>
 
                         {/* Stats Panel */}
-                        <div className="relative rounded-[26px] bg-card/80 dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-white/10 dark:border-white/5 p-6 shadow-2xl overflow-hidden">
+                        <div className="relative rounded-[26px] bg-white dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/5 p-6 shadow-2xl overflow-hidden">
                             {/* Noise texture */}
                             <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.7\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
 
@@ -447,50 +447,50 @@ export default function StreamPage() {
 
                             <div className="relative space-y-2.5">
                                 {/* Stat items with hover effects */}
-                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] dark:bg-white/[0.02] border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300 cursor-default">
+                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300 cursor-default">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center border border-blue-500/10 group-hover:scale-110 transition-transform">
                                             <Zap className="w-4 h-4 text-blue-400" />
                                         </div>
                                         <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Chunk Size</span>
                                     </div>
-                                    <span className="font-mono font-bold text-foreground bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5 text-sm">
+                                    <span className="font-mono font-bold text-foreground bg-slate-100 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 text-sm">
                                         {audioProgress ? `${audioProgress.chunkBytes} B` : '—'}
                                     </span>
                                 </div>
 
-                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] dark:bg-white/[0.02] border border-white/5 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 cursor-default">
+                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 cursor-default">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center border border-emerald-500/10 group-hover:scale-110 transition-transform">
                                             <Server className="w-4 h-4 text-emerald-400" />
                                         </div>
                                         <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Total Data</span>
                                     </div>
-                                    <span className="font-mono font-bold text-foreground bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5 text-sm">
+                                    <span className="font-mono font-bold text-foreground bg-slate-100 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 text-sm">
                                         {audioProgress ? `${(audioProgress.totalBytes / 1024).toFixed(1)} KB` : '—'}
                                     </span>
                                 </div>
 
-                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] dark:bg-white/[0.02] border border-white/5 hover:border-violet-500/30 hover:bg-violet-500/5 transition-all duration-300 cursor-default">
+                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-violet-500/30 hover:bg-violet-500/5 transition-all duration-300 cursor-default">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center border border-violet-500/10 group-hover:scale-110 transition-transform">
                                             <Signal className="w-4 h-4 text-violet-400" />
                                         </div>
                                         <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Packets Sent</span>
                                     </div>
-                                    <span className="font-mono font-bold text-foreground bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5 text-sm">
+                                    <span className="font-mono font-bold text-foreground bg-slate-100 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 text-sm">
                                         {audioProgress ? audioProgress.totalChunks : '—'}
                                     </span>
                                 </div>
 
-                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] dark:bg-white/[0.02] border border-white/5 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all duration-300 cursor-default">
+                                <div className="group flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all duration-300 cursor-default">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center border border-amber-500/10 group-hover:scale-110 transition-transform">
                                             <Clock className="w-4 h-4 text-amber-400" />
                                         </div>
                                         <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Duration</span>
                                     </div>
-                                    <span className="font-mono font-bold text-foreground bg-white/5 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5 text-sm">
+                                    <span className="font-mono font-bold text-foreground bg-slate-100 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 text-sm">
                                         {formatDuration(duration)}
                                     </span>
                                 </div>
@@ -501,7 +501,7 @@ export default function StreamPage() {
 
                 {/* Right Column: Transcript Panel */}
                 <div className="w-full lg:w-[420px] shrink-0 lg:sticky lg:top-28 lg:h-[calc(100vh-160px)]">
-                    <div className="relative h-full rounded-[26px] bg-card/80 dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-white/10 dark:border-white/5 overflow-hidden flex flex-col shadow-2xl">
+                    <div className="relative h-full rounded-[26px] bg-white dark:bg-[#0a0a1a]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col shadow-2xl">
                         {/* Noise texture */}
                         <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.7\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
 
@@ -511,7 +511,7 @@ export default function StreamPage() {
                         </div>
 
                         {/* Header */}
-                        <div className="relative px-6 py-5 border-b border-white/5 dark:border-white/[0.03] bg-gradient-to-r from-white/[0.02] via-transparent to-white/[0.02]">
+                        <div className="relative px-6 py-5 border-b border-slate-200/80 dark:border-white/[0.03] bg-gradient-to-r from-slate-100/50 dark:from-white/[0.02] via-transparent to-slate-100/50 dark:to-white/[0.02]">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
@@ -528,7 +528,7 @@ export default function StreamPage() {
                                 <div className="flex items-center gap-2">
                                     <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${isRecording
                                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-lg shadow-emerald-500/10'
-                                        : 'bg-white/5 dark:bg-white/[0.03] text-muted-foreground border-white/5'
+                                        : 'bg-slate-100 dark:bg-white/[0.03] text-muted-foreground border-slate-200 dark:border-white/5'
                                         }`}>
                                         {isRecording ? 'Active' : 'Waiting'}
                                     </span>
@@ -552,9 +552,9 @@ export default function StreamPage() {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <span className="text-xs font-bold text-foreground">You</span>
-                                                <span className="text-[10px] text-muted-foreground bg-white/5 px-2 py-0.5 rounded">just now</span>
+                                                <span className="text-[10px] text-muted-foreground bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded">just now</span>
                                             </div>
-                                            <div className="p-4 rounded-2xl rounded-tl-md bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5 text-sm leading-relaxed text-foreground/90 shadow-lg">
+                                            <div className="p-4 rounded-2xl rounded-tl-md bg-gradient-to-br from-slate-100/70 to-slate-50/70 dark:from-white/[0.03] dark:to-white/[0.01] border border-slate-200 dark:border-white/5 text-sm leading-relaxed text-foreground/90 shadow-lg">
                                                 {transcript}
                                             </div>
                                         </div>
@@ -563,7 +563,7 @@ export default function StreamPage() {
                             ) : (
                                 <div className="h-full flex flex-col items-center justify-center text-center space-y-5">
                                     <div className="relative">
-                                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-violet-500/10 flex items-center justify-center border border-white/5">
+                                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-violet-500/10 flex items-center justify-center border border-slate-200 dark:border-white/5">
                                             <Activity className="w-10 h-10 text-muted-foreground/30" />
                                         </div>
                                         <div className="absolute inset-0 rounded-2xl border-2 border-dashed border-muted-foreground/10" style={{ animation: 'spin 15s linear infinite' }} />
@@ -580,7 +580,7 @@ export default function StreamPage() {
                         </div>
 
                         {/* Footer */}
-                        <div className="relative px-6 py-4 bg-gradient-to-r from-white/[0.02] via-transparent to-white/[0.02] border-t border-white/5 dark:border-white/[0.03]">
+                        <div className="relative px-6 py-4 bg-gradient-to-r from-slate-100/50 dark:from-white/[0.02] via-transparent to-slate-100/50 dark:to-white/[0.02] border-t border-slate-200/80 dark:border-white/[0.03]">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2.5">
                                     <div className={`w-2 h-2 rounded-full transition-all ${isRecording ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-muted-foreground/30'}`}>
@@ -590,7 +590,7 @@ export default function StreamPage() {
                                         {isRecording ? 'Processing audio...' : 'Microphone idle'}
                                     </span>
                                 </div>
-                                <span className="text-[10px] text-muted-foreground/50 font-mono flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+                                <span className="text-[10px] text-muted-foreground/50 font-mono flex items-center gap-1.5 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/5">
                                     <Sparkles className="w-3 h-3" />
                                     AI Powered
                                 </span>

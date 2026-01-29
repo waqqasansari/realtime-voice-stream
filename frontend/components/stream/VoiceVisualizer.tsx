@@ -40,13 +40,13 @@ export default function VoiceVisualizer({ audioLevel, isRecording }: VoiceVisual
 
         // Theme-aware colors
         const colors = {
-            // Background colors
-            bgFade: isDark ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.15)',
+            // Background colors - use proper light/dark fade
+            bgFade: isDark ? 'rgba(0, 0, 0, 0.15)' : 'rgba(241, 245, 249, 0.25)',
             // Recording gradient colors
             recordingGradientStart: isDark ? 'rgba(139, 92, 246, 0.05)' : 'rgba(99, 102, 241, 0.08)',
             recordingGradientMid: isDark ? 'rgba(244, 63, 94, 0.03)' : 'rgba(236, 72, 153, 0.05)',
-            // Idle gradient colors
-            idleGradientStart: isDark ? 'rgba(100, 116, 139, 0.03)' : 'rgba(100, 116, 139, 0.05)',
+            // Idle gradient colors - stronger in light mode
+            idleGradientStart: isDark ? 'rgba(100, 116, 139, 0.03)' : 'rgba(99, 102, 241, 0.08)',
             // Bar colors for idle
             idleBarColor: isDark ? 'rgba(148, 163, 184, ' : 'rgba(100, 116, 139, ',
             // Glow colors
@@ -63,11 +63,18 @@ export default function VoiceVisualizer({ audioLevel, isRecording }: VoiceVisual
             const spacing = (rect.width / barCount) * 0.45;
             const centerY = rect.height / 2;
 
-            // Clear with fade effect for trails
-            ctx.fillStyle = colors.bgFade;
-            ctx.fillRect(0, 0, rect.width, rect.height);
+            // CRITICAL: Clear canvas completely first with opaque background for light mode
+            if (isDark) {
+                // Dark mode: use fade effect for trails
+                ctx.fillStyle = 'rgba(10, 10, 26, 0.15)';
+                ctx.fillRect(0, 0, rect.width, rect.height);
+            } else {
+                // Light mode: clear with opaque light background to prevent dark accumulation
+                ctx.fillStyle = '#f1f5f9'; // slate-100
+                ctx.fillRect(0, 0, rect.width, rect.height);
+            }
 
-            // Subtle radial gradient background
+            // Subtle radial gradient background overlay
             const bgGradient = ctx.createRadialGradient(
                 rect.width / 2, centerY, 0,
                 rect.width / 2, centerY, rect.width / 2
@@ -76,10 +83,10 @@ export default function VoiceVisualizer({ audioLevel, isRecording }: VoiceVisual
             if (isRecording) {
                 bgGradient.addColorStop(0, colors.recordingGradientStart);
                 bgGradient.addColorStop(0.5, colors.recordingGradientMid);
-                bgGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                bgGradient.addColorStop(1, isDark ? 'rgba(10, 10, 26, 0)' : 'rgba(241, 245, 249, 0)');
             } else {
                 bgGradient.addColorStop(0, colors.idleGradientStart);
-                bgGradient.addColorStop(1, isDark ? 'rgba(0, 0, 0, 0)' : 'rgba(255, 255, 255, 0)');
+                bgGradient.addColorStop(1, isDark ? 'rgba(10, 10, 26, 0)' : 'rgba(241, 245, 249, 0)');
             }
 
             ctx.fillStyle = bgGradient;
@@ -232,8 +239,8 @@ export default function VoiceVisualizer({ audioLevel, isRecording }: VoiceVisual
 
     return (
         <div className="relative h-56 md:h-72 w-full flex items-center justify-center overflow-hidden rounded-2xl">
-            {/* Base background - theme aware */}
-            <div className="absolute inset-0 bg-gradient-to-b from-foreground/[0.02] to-foreground/5 dark:from-black/20 dark:to-black/40 transition-colors duration-500" />
+            {/* Base background - theme aware - FULLY OPAQUE for light mode */}
+            <div className="absolute inset-0 bg-slate-100 dark:bg-[#0a0a1a]/80 transition-colors duration-500 border border-slate-200 dark:border-white/5 rounded-2xl" />
 
             {/* Canvas */}
             <canvas
